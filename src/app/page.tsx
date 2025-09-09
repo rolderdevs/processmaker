@@ -1,6 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import type { LanguageModelUsage } from "ai";
 import { CopyIcon, RefreshCcwIcon } from "lucide-react";
 import { Fragment, useState } from "react";
 import { Action, Actions } from "@/components/ai-elements/actions";
@@ -55,19 +56,17 @@ import {
   SourcesContent,
   SourcesTrigger,
 } from "@/components/ai-elements/sources";
+import { type Model, models } from "@/lib/ai";
 import type { ChatUIMessage } from "./api/chat/route";
-import { LanguageModelUsage } from "ai";
-import { Model, models } from "@/lib/ai";
 
 const Home = () => {
   const [input, setInput] = useState("");
-  const [model, setModel] = useState<Model>(models["deepseek/deepseek-r1"]);
+  const [model, setModel] = useState<Model>(models["google/gemini-2.5-flash"]);
   const [usage, setUsage] = useState<LanguageModelUsage>();
 
   const { messages, sendMessage, regenerate, status } = useChat<ChatUIMessage>({
     onFinish: ({ message, isError }) => {
       if (!isError && message.metadata?.usage) {
-        console.log(message.metadata);
         setUsage(message.metadata.usage);
       }
     },

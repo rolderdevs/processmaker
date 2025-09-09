@@ -8,6 +8,18 @@ export type Model = {
 };
 
 export const models: Record<string, Model> = {
+  "google/gemini-2.5-flash": {
+    name: "Google Gemini 2.5 Flash",
+    value: "google/gemini-2.5-flash",
+    context: 1000000,
+    priceModelId: "google:gemini-2.5-flash",
+  },
+  "google/gemini-2.5-pro": {
+    name: "Google Gemini 2.5 Pro",
+    value: "google/gemini-2.5-pro",
+    context: 1000000,
+    priceModelId: "google:gemini-2.5-pro",
+  },
   "deepseek/deepseek-r1": {
     name: "Deepseek R1",
     value: "deepseek/deepseek-r1",
@@ -31,18 +43,6 @@ export const models: Record<string, Model> = {
     value: "openai/gpt-5",
     context: 400000,
     priceModelId: "openai:gpt-5",
-  },
-  "google/gemini-2.5-flash": {
-    name: "Google Gemini 2.5 Flash",
-    value: "google/gemini-2.5-flash",
-    context: 1000000,
-    priceModelId: "google:gemini-2.5-flash",
-  },
-  "google/gemini-2.5-pro": {
-    name: "Google Gemini 2.5 Pro",
-    value: "google/gemini-2.5-pro",
-    context: 1000000,
-    priceModelId: "google:gemini-2.5-pro",
   },
   "xai/grok-3": {
     name: "xAI Grok-3",

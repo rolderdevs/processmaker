@@ -64,13 +64,14 @@ const Home = () => {
   const [model, setModel] = useState<Model>(models["google/gemini-2.5-flash"]);
   const [usage, setUsage] = useState<LanguageModelUsage>();
 
-  const { messages, sendMessage, regenerate, status } = useChat<ChatUIMessage>({
-    onFinish: ({ message, isError }) => {
-      if (!isError && message.metadata?.usage) {
-        setUsage(message.metadata.usage);
-      }
-    },
-  });
+  const { messages, setMessages, sendMessage, regenerate, status, error } =
+    useChat<ChatUIMessage>({
+      onFinish: ({ message, isError }) => {
+        if (!isError && message.metadata?.usage) {
+          setUsage(message.metadata.usage);
+        }
+      },
+    });
 
   const handleSubmit = (message: PromptInputMessage) => {
     const hasText = Boolean(message.text);
@@ -78,6 +79,10 @@ const Home = () => {
 
     if (!(hasText || hasAttachments)) {
       return;
+    }
+
+    if (error != null) {
+      setMessages(messages.slice(0, -1)); // remove last message
     }
 
     sendMessage(
@@ -177,6 +182,7 @@ const Home = () => {
                 })}
               </div>
             ))}
+            {error && <div>Произошла ошибка: {error.message}</div>}
             {status === "submitted" && <Loader />}
           </ConversationContent>
           <ConversationScrollButton />

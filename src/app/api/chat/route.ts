@@ -1,12 +1,11 @@
+import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
+import type { OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
   smoothStream,
   streamText,
   type UIMessage,
 } from "ai";
-import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
-import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
-import { XaiProviderOptions } from '@ai-sdk/xai';
 import { z } from "zod/v4";
 import { systemPrompt } from "./promts";
 
@@ -42,7 +41,7 @@ export async function POST(req: Request) {
     experimental_transform: smoothStream(),
     providerOptions: {
       openai: {
-        reasoningSummary: 'auto'
+        reasoningSummary: "auto",
       } satisfies OpenAIResponsesProviderOptions,
       google: {
         thinkingConfig: {

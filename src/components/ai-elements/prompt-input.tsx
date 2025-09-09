@@ -89,12 +89,11 @@ export function PromptInputAttachment({
       {...props}
     >
       {data.mediaType?.startsWith("image/") && data.url ? (
-        <img
-          alt={data.filename || "attachment"}
-          className="size-full rounded-md object-cover"
-          height={56}
-          src={data.url}
-          width={56}
+        <div
+          className="size-full rounded-md object-cover bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${data.url})` }}
+          role="img"
+          aria-label={data.filename || "attachment"}
         />
       ) : (
         <div className="flex size-full items-center justify-center text-muted-foreground">
@@ -170,7 +169,7 @@ export type PromptInputActionAddAttachmentsProps = ComponentProps<
 };
 
 export const PromptInputActionAddAttachments = ({
-  label = "Add photos or files",
+  label = "Добавить фото или файлы",
   ...props
 }: PromptInputActionAddAttachmentsProps) => {
   const attachments = usePromptInputAttachments();
@@ -266,7 +265,7 @@ export const PromptInput = ({
       if (accepted.length === 0) {
         onError?.({
           code: "accept",
-          message: "No files match the accepted types.",
+          message: "Нет файлов, соответствующих типу.",
         });
         return;
       }
@@ -276,7 +275,7 @@ export const PromptInput = ({
       if (sized.length === 0 && accepted.length > 0) {
         onError?.({
           code: "max_file_size",
-          message: "All files exceed the maximum size.",
+          message: "Все файлы превышают максимальный размер.",
         });
         return;
       }
@@ -290,7 +289,7 @@ export const PromptInput = ({
         if (typeof capacity === "number" && sized.length > capacity) {
           onError?.({
             code: "max_files",
-            message: "Too many files. Some were not added.",
+            message: "Слишком много файлов. Некоторые не были добавлены.",
           });
         }
         const next: (FileUIPart & { id: string })[] = [];
@@ -458,7 +457,7 @@ export type PromptInputTextareaProps = ComponentProps<typeof Textarea>;
 export const PromptInputTextarea = ({
   onChange,
   className,
-  placeholder = "What would you like to know?",
+  placeholder = "Введите сообщение...",
   ...props
 }: PromptInputTextareaProps) => {
   const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (e) => {

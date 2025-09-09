@@ -1,9 +1,22 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { CopyIcon, GlobeIcon, RefreshCcwIcon } from "lucide-react";
+import type { LanguageModelUsage } from "ai";
+import { CopyIcon, RefreshCcwIcon } from "lucide-react";
 import { Fragment, useState } from "react";
 import { Action, Actions } from "@/components/ai-elements/actions";
+import {
+  Context,
+  ContextCacheUsage,
+  ContextContent,
+  ContextContentBody,
+  ContextContentFooter,
+  ContextContentHeader,
+  ContextInputUsage,
+  ContextOutputUsage,
+  ContextReasoningUsage,
+  ContextTrigger,
+} from "@/components/ai-elements/context";
 import {
   Conversation,
   ConversationContent,
@@ -20,7 +33,6 @@ import {
   PromptInputAttachment,
   PromptInputAttachments,
   PromptInputBody,
-  PromptInputButton,
   type PromptInputMessage,
   PromptInputModelSelect,
   PromptInputModelSelectContent,
@@ -44,23 +56,21 @@ import {
   SourcesContent,
   SourcesTrigger,
 } from "@/components/ai-elements/sources";
+import { type Model, models } from "@/lib/ai";
+import type { ChatUIMessage } from "./api/chat/route";
 
-const models = [
-  {
-    name: "GPT 4o",
-    value: "openai/gpt-4o",
-  },
-  {
-    name: "Deepseek R1",
-    value: "deepseek/deepseek-r1",
-  },
-];
-
-const ChatBotDemo = () => {
+const Home = () => {
   const [input, setInput] = useState("");
-  const [model, setModel] = useState<string>(models[0].value);
-  const [webSearch, setWebSearch] = useState(false);
-  const { messages, sendMessage, regenerate, status } = useChat();
+  const [model, setModel] = useState<Model>(models["google/gemini-2.5-flash"]);
+  const [usage, setUsage] = useState<LanguageModelUsage>();
+
+  const { messages, sendMessage, regenerate, status } = useChat<ChatUIMessage>({
+    onFinish: ({ message, isError }) => {
+      if (!isError && message.metadata?.usage) {
+        setUsage(message.metadata.usage);
+      }
+    },
+  });
 
   const handleSubmit = (message: PromptInputMessage) => {
     const hasText = Boolean(message.text);
@@ -77,8 +87,7 @@ const ChatBotDemo = () => {
       },
       {
         body: {
-          model: model,
-          webSearch: webSearch,
+          model: model.value,
         },
       },
     );
@@ -174,8 +183,8 @@ const ChatBotDemo = () => {
         </Conversation>
 
         <PromptInput
+          className="rounded-xl border shadow-sm transition-all duration-200 bg-background border-border focus-within:border-border hover:border-muted-foreground/50"
           onSubmit={handleSubmit}
-          className="mt-4"
           globalDrop
           multiple
         >
@@ -184,9 +193,29 @@ const ChatBotDemo = () => {
               {(attachment) => <PromptInputAttachment data={attachment} />}
             </PromptInputAttachments>
             <PromptInputTextarea
+              className="text-sm resize-none py-3 px-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] bg-transparent !border-0 !border-none outline-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none placeholder:text-muted-foreground min-h-20"
               onChange={(e) => setInput(e.target.value)}
+              autoFocus
               value={input}
             />
+            <Context
+              maxTokens={model.context}
+              usedTokens={usage?.totalTokens || 0}
+              usage={usage}
+              modelId={model.priceModelId}
+            >
+              <ContextTrigger className="absolute right-6 rounded-xl" />
+              <ContextContent>
+                <ContextContentHeader />
+                <ContextContentBody>
+                  <ContextInputUsage />
+                  <ContextOutputUsage />
+                  <ContextReasoningUsage />
+                  <ContextCacheUsage />
+                </ContextContentBody>
+                <ContextContentFooter />
+              </ContextContent>
+            </Context>
           </PromptInputBody>
           <PromptInputToolbar>
             <PromptInputTools>
@@ -196,29 +225,22 @@ const ChatBotDemo = () => {
                   <PromptInputActionAddAttachments />
                 </PromptInputActionMenuContent>
               </PromptInputActionMenu>
-              <PromptInputButton
-                variant={webSearch ? "default" : "ghost"}
-                onClick={() => setWebSearch(!webSearch)}
-              >
-                <GlobeIcon size={16} />
-                <span>Search</span>
-              </PromptInputButton>
               <PromptInputModelSelect
                 onValueChange={(value) => {
-                  setModel(value);
+                  setModel(models[value]);
                 }}
-                value={model}
+                value={model.value}
               >
                 <PromptInputModelSelectTrigger>
                   <PromptInputModelSelectValue />
                 </PromptInputModelSelectTrigger>
                 <PromptInputModelSelectContent>
-                  {models.map((model) => (
+                  {Object.values(models).map((modelOption) => (
                     <PromptInputModelSelectItem
-                      key={model.value}
-                      value={model.value}
+                      key={modelOption.value}
+                      value={modelOption.value}
                     >
-                      {model.name}
+                      {modelOption.name}
                     </PromptInputModelSelectItem>
                   ))}
                 </PromptInputModelSelectContent>
@@ -232,4 +254,4 @@ const ChatBotDemo = () => {
   );
 };
 
-export default ChatBotDemo;
+export default Home;

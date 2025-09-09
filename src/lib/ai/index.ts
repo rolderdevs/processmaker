@@ -14,6 +14,12 @@ export const models: Record<string, Model> = {
     context: 1000000,
     priceModelId: "google:gemini-2.5-flash",
   },
+  "google/gemini-2.5-flash-lite": {
+    name: "Google Gemini 2.5 Flash Lite",
+    value: "google/gemini-2.5-flash-lite",
+    context: 1000000,
+    priceModelId: "google:gemini-2.5-flash-lite-preview-06-17",
+  },
   "google/gemini-2.5-pro": {
     name: "Google Gemini 2.5 Pro",
     value: "google/gemini-2.5-pro",

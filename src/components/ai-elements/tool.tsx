@@ -29,17 +29,17 @@ export const Tool = ({ className, ...props }: ToolProps) => (
 );
 
 export type ToolHeaderProps = {
-  type: ToolUIPart["type"];
+  type: string;
   state: ToolUIPart["state"];
   className?: string;
 };
 
 const getStatusBadge = (status: ToolUIPart["state"]) => {
   const labels = {
-    "input-streaming": "Pending",
-    "input-available": "Running",
-    "output-available": "Completed",
-    "output-error": "Error",
+    "input-streaming": "Подготовка",
+    "input-available": "Выполнение",
+    "output-available": "Готово",
+    "output-error": "Ошибка",
   } as const;
 
   const icons = {
@@ -98,7 +98,7 @@ export type ToolInputProps = ComponentProps<"div"> & {
 export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
   <div className={cn("space-y-2 overflow-hidden p-4", className)} {...props}>
     <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-      Parameters
+      Параметры
     </h4>
     <div className="rounded-md bg-muted/50">
       <CodeBlock code={JSON.stringify(input, null, 2)} language="json" />
@@ -124,11 +124,11 @@ export const ToolOutput = ({
   return (
     <div className={cn("space-y-2 p-4", className)} {...props}>
       <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-        {errorText ? "Error" : "Result"}
+        {errorText ? "Ошибка" : "Результат"}
       </h4>
       <div
         className={cn(
-          "overflow-x-auto rounded-md text-xs [&_table]:w-full",
+          "overflow-x-auto rounded-md text-xs [&_table]:w-full py-2 px-3",
           errorText
             ? "bg-destructive/10 text-destructive"
             : "bg-muted/50 text-foreground",

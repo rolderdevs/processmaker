@@ -14,6 +14,12 @@ export const models: Record<string, Model> = {
     context: 1000000,
     priceModelId: "google:gemini-2.5-flash",
   },
+  "google/gemini-2.5-flash-lite": {
+    name: "Google Gemini 2.5 Flash Lite",
+    value: "google/gemini-2.5-flash-lite",
+    context: 1000000,
+    priceModelId: "google:gemini-2.5-flash-lite-preview-06-17",
+  },
   "google/gemini-2.5-pro": {
     name: "Google Gemini 2.5 Pro",
     value: "google/gemini-2.5-pro",
@@ -61,5 +67,23 @@ export const models: Record<string, Model> = {
     value: "xai/grok-4",
     context: 256000,
     priceModelId: "xai:grok-4",
+  },
+  "anthropic/claude-sonnet-4": {
+    name: "Anthropic Claude Sonnet 4",
+    value: "anthropic/claude-sonnet-4",
+    context: 200000,
+    priceModelId: "anthropic:claude-sonnet-4-20250514",
+  },
+  "anthropic/claude-3.7-sonnet": {
+    name: "Anthropic Claude Sonnet 3.7",
+    value: "anthropic/claude-3.7-sonnet",
+    context: 200000,
+    priceModelId: "anthropic:claude-3-7-sonnet-20250219",
+  },
+  "anthropic/claude-opus-4.1": {
+    name: "Anthropic Claude Opus 4.1",
+    value: "anthropic/claude-opus-4.1",
+    context: 200000,
+    priceModelId: "anthropic:claude-opus-4-1-20250805",
   },
 };

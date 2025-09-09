@@ -1,64 +1,110 @@
+import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
+import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
+import type { OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
+import {
+  createOpenRouter,
+  type OpenRouterProviderOptions,
+} from "@openrouter/ai-sdk-provider";
 import {
   convertToModelMessages,
+  createUIMessageStream,
+  JsonToSseTransformStream,
   smoothStream,
+  stepCountIs,
   streamText,
-  type UIMessage,
 } from "ai";
-import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
-import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
-import { XaiProviderOptions } from '@ai-sdk/xai';
-import { z } from "zod/v4";
-import { systemPrompt } from "./promts";
+import type { ChatUIMessage, Document } from "@/lib/ai/types";
+import { createDocument, updateDocument } from "./document";
+// import { systemPrompt } from "./promts";
 
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 30;
+export const maxDuration = 60;
 
-export const messageMetadataSchema = z.object({
-  usage: z.object({
-    inputTokens: z.number(),
-    outputTokens: z.number(),
-    totalTokens: z.number(),
-    reasoningTokens: z.number(),
-    cachedInputTokens: z.number(),
-  }),
-});
+const openrouter = createOpenRouter();
 
-export type MessageMetadata = z.infer<typeof messageMetadataSchema>;
-export type ChatUIMessage = UIMessage<MessageMetadata>;
-
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   const {
+    document,
     messages,
     model,
   }: {
-    messages: UIMessage[];
+    document: Document;
+    messages: ChatUIMessage[];
     model: string;
-  } = await req.json();
+  } = await request.json();
 
-  const result = streamText({
-    model,
-    messages: convertToModelMessages(messages),
-    system: systemPrompt,
-    experimental_transform: smoothStream(),
-    providerOptions: {
-      openai: {
-        reasoningSummary: 'auto'
-      } satisfies OpenAIResponsesProviderOptions,
-      google: {
-        thinkingConfig: {
-          includeThoughts: true,
-        },
-      } satisfies GoogleGenerativeAIProviderOptions,
-    },
-  });
+  try {
+    const openrouterModel = openrouter.chat(model);
 
-  // send sources and reasoning back to the client
-  return result.toUIMessageStreamResponse({
-    sendSources: true,
-    sendReasoning: true,
-    originalMessages: messages,
-    messageMetadata: ({ part }) => {
-      if (part.type === "finish-step") return part;
-    },
-  });
+    const stream = createUIMessageStream({
+      originalMessages: messages,
+      execute: ({ writer: dataStream }) => {
+        const result = streamText({
+          model: openrouterModel,
+          // system: systemPrompt,
+          messages: convertToModelMessages(messages),
+          stopWhen: stepCountIs(5),
+          experimental_activeTools: ["createDocument", "updateDocument"],
+          experimental_transform: smoothStream({ chunking: "word" }),
+          tools: {
+            createDocument: createDocument({
+              model: openrouterModel,
+              dataStream,
+            }),
+            updateDocument: updateDocument({
+              model: openrouterModel,
+              document,
+              dataStream,
+            }),
+          },
+          providerOptions: {
+            openai: {
+              reasoningSummary: "auto",
+            } satisfies OpenAIResponsesProviderOptions,
+            google: {
+              thinkingConfig: {
+                includeThoughts: true,
+              },
+            } satisfies GoogleGenerativeAIProviderOptions,
+            anthropic: {
+              thinking: { type: "enabled" },
+            } satisfies AnthropicProviderOptions,
+            openrouter: {
+              reasoning: {
+                enabled: true,
+                effort: "medium",
+              },
+            } satisfies OpenRouterProviderOptions,
+          },
+        });
+
+        result.consumeStream();
+        dataStream.merge(
+          result.toUIMessageStream({
+            sendReasoning: true,
+            messageMetadata: ({ part }) => {
+              if (part.type === "finish-step") {
+                return {
+                  usage: {
+                    inputTokens: part.usage.inputTokens ?? 0,
+                    outputTokens: part.usage.outputTokens ?? 0,
+                    totalTokens: part.usage.totalTokens ?? 0,
+                    reasoningTokens: part.usage.reasoningTokens ?? 0,
+                    cachedInputTokens: part.usage.cachedInputTokens ?? 0,
+                  },
+                };
+              }
+            },
+          }),
+        );
+      },
+      onError: () => {
+        return "Опа, ошибка!";
+      },
+    });
+
+    return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
+  } catch (error) {
+    console.error("Опа, ошибка:", error);
+    return new Response(JSON.stringify({ error }), { status: 500 });
+  }
 }

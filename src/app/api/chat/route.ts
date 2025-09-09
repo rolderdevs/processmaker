@@ -41,25 +41,25 @@ export async function POST(req: Request) {
     messages: convertToModelMessages(messages),
     system:
       systemPrompt +
-      "\n\nWhen user asks to create documents, articles, or substantial content, use the createDocument tool. When user asks to modify or update existing document, use updateDocument tool.",
+      "\n\nКогда пользователь просит создать документы, статьи или существенный контент, используй инструмент createDocument. Когда пользователь просит изменить или обновить существующий документ, используй инструмент updateDocument.",
     experimental_transform: smoothStream(),
     tools: {
       createDocument: tool({
-        description: "Create a text document",
+        description: "Создать текстовый документ",
         inputSchema: z.object({
-          title: z.string().describe("Title of the document"),
+          title: z.string().describe("Название документа"),
           content: z
             .string()
-            .describe("Content of the document in markdown format"),
+            .describe("Содержимое документа в формате markdown"),
         }),
       }),
       updateDocument: tool({
-        description: "Update the existing document with new content",
+        description: "Обновить существующий документ новым содержимым",
         inputSchema: z.object({
-          title: z.string().describe("Updated title of the document"),
+          title: z.string().describe("Обновленное название документа"),
           content: z
             .string()
-            .describe("Updated content of the document in markdown format"),
+            .describe("Обновленное содержимое документа в формате markdown"),
         }),
       }),
     },

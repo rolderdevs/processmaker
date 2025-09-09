@@ -118,7 +118,7 @@ const Home = () => {
       : undefined;
 
     sendMessage({
-      text: message.text || "Sent with attachments",
+      text: message.text || "Отправлено с вложениями",
       files: convertedFiles,
     });
     setInput("");
@@ -193,7 +193,7 @@ const Home = () => {
                               <Actions className="mt-2">
                                 <Action
                                   onClick={() => regenerate()}
-                                  label="Retry"
+                                  label="Повторить"
                                 >
                                   <RefreshCcwIcon className="size-3" />
                                 </Action>
@@ -201,7 +201,7 @@ const Home = () => {
                                   onClick={() =>
                                     navigator.clipboard.writeText(part.text)
                                   }
-                                  label="Copy"
+                                  label="Копировать"
                                 >
                                   <CopyIcon className="size-3" />
                                 </Action>

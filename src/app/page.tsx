@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import type { LanguageModelUsage } from "ai";
-import { CopyIcon, RefreshCcwIcon } from "lucide-react";
+import { CopyIcon, RefreshCcwIcon, XIcon } from "lucide-react";
 import { Fragment, useState } from "react";
 import { Action, Actions } from "@/components/ai-elements/actions";
 import {
@@ -44,6 +44,7 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
+import { DefaultChatTransport } from "ai";
 import {
   Reasoning,
   ReasoningContent,
@@ -57,6 +58,7 @@ import {
   SourcesTrigger,
 } from "@/components/ai-elements/sources";
 import { type Model, models } from "@/lib/ai";
+import { convertBlobFilesToDataURLs } from "@/lib/utils";
 import type { ChatUIMessage } from "./api/chat/route";
 
 const Home = () => {
@@ -64,8 +66,33 @@ const Home = () => {
   const [model, setModel] = useState<Model>(models["google/gemini-2.5-flash"]);
   const [usage, setUsage] = useState<LanguageModelUsage>();
 
+  // Состояние артефакта
+  const [artifactVisible, setArtifactVisible] = useState(false);
+  const [artifactTitle, setArtifactTitle] = useState("");
+  const [artifactContent, setArtifactContent] = useState("");
+
   const { messages, setMessages, sendMessage, regenerate, status, error } =
     useChat<ChatUIMessage>({
+      transport: new DefaultChatTransport({
+        api: '/api/chat',
+        body: () => ({
+          model: model.value,
+        }),
+      }),
+      onToolCall: ({ toolCall }) => {
+        if (toolCall.toolName === "createDocument") {
+          const input = toolCall.input as { title?: string; content?: string };
+          setArtifactTitle(input.title || "Документ");
+          setArtifactContent(input.content || "");
+          setArtifactVisible(true);
+        }
+        if (toolCall.toolName === "updateDocument") {
+          const input = toolCall.input as { title?: string; content?: string };
+          setArtifactTitle(input.title || "Документ");
+          setArtifactContent(input.content || "");
+          setArtifactVisible(true);
+        }
+      },
       onFinish: ({ message, isError }) => {
         if (!isError && message.metadata?.usage) {
           setUsage(message.metadata.usage);
@@ -73,7 +100,7 @@ const Home = () => {
       },
     });
 
-  const handleSubmit = (message: PromptInputMessage) => {
+  const handleSubmit = async (message: PromptInputMessage) => {
     const hasText = Boolean(message.text);
     const hasAttachments = Boolean(message.files?.length);
 
@@ -85,22 +112,43 @@ const Home = () => {
       setMessages(messages.slice(0, -1)); // remove last message
     }
 
-    sendMessage(
-      {
-        text: message.text || "Sent with attachments",
-        files: message.files,
-      },
-      {
-        body: {
-          model: model.value,
-        },
-      },
-    );
+    // Конвертируем blob URLs в data URLs
+    const convertedFiles = message.files
+      ? await convertBlobFilesToDataURLs(message.files)
+      : undefined;
+
+    sendMessage({
+      text: message.text || "Sent with attachments",
+      files: convertedFiles,
+    });
     setInput("");
   };
 
   return (
     <div className="max-w-4xl mx-auto p-6 relative size-full h-screen">
+      {/* Простой артефакт */}
+      {artifactVisible && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-lg w-[80%] h-[80%] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="font-semibold text-lg">{artifactTitle}</h2>
+              <button
+                type="button"
+                onClick={() => setArtifactVisible(false)}
+                className="p-2 hover:bg-gray-100 rounded"
+              >
+                <XIcon className="size-4" />
+              </button>
+            </div>
+            <div className="flex-1 p-4 overflow-auto">
+              <pre className="whitespace-pre-wrap text-sm">
+                {artifactContent}
+              </pre>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col h-full">
         <Conversation className="h-full">
           <ConversationContent>
@@ -141,7 +189,7 @@ const Home = () => {
                             </MessageContent>
                           </Message>
                           {message.role === "assistant" &&
-                            i === messages.length - 1 && (
+                            i === message.parts.length - 1 && (
                               <Actions className="mt-2">
                                 <Action
                                   onClick={() => regenerate()}
@@ -161,6 +209,23 @@ const Home = () => {
                             )}
                         </Fragment>
                       );
+                    case "tool-call": {
+                      const toolName = part.type.replace("tool-", "");
+                      const input = part.input as { title?: string };
+                      return (
+                        <Message key={`${message.id}-${i}`} from={message.role}>
+                          <MessageContent>
+                            <div className="text-sm text-gray-600">
+                              {toolName === "createDocument" &&
+                                "🔧 Создаю документ: "}
+                              {toolName === "updateDocument" &&
+                                "✏️ Обновляю документ: "}
+                              <strong>{input.title || "документ"}</strong>
+                            </div>
+                          </MessageContent>
+                        </Message>
+                      );
+                    }
                     case "reasoning":
                       return (
                         <Reasoning

@@ -16,6 +16,7 @@ type UpdateDocumentProps = {
 
 export const createDocument = ({ model, dataStream }: DocumentProps) =>
   tool({
+    name: "Создать документ",
     description:
       "Создать документ для написания или создания контента. Этот инструмент вызовет другие функции, которые будут генерировать содержимое документа на основе заголовка и описания.",
     inputSchema: z.object({
@@ -46,7 +47,7 @@ export const createDocument = ({ model, dataStream }: DocumentProps) =>
 
       return {
         title,
-        content: "A document was created and is now visible to the user.",
+        content: "Документ создан и теперь доступен пользователю",
       };
     },
   });
@@ -79,7 +80,7 @@ export const updateDocument = ({
 
       return {
         title: document.title,
-        content: "Документ был успешно обновлен.",
+        content: "Документ был успешно обновлен",
       };
     },
   });

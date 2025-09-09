@@ -1,6 +1,6 @@
 import type { InferUITool, UIMessage } from "ai";
 import z from "zod/v4";
-import type { createDocument } from "@/app/api/chat/document";
+import type { createDocument, updateDocument } from "@/app/api/chat/document";
 
 export type Document = {
   title: string;
@@ -20,10 +20,11 @@ export const messageMetadataSchema = z.object({
 export type MessageMetadata = z.infer<typeof messageMetadataSchema>;
 
 type createDocumentTool = InferUITool<ReturnType<typeof createDocument>>;
+type updateDocumentTool = InferUITool<ReturnType<typeof updateDocument>>;
 
 export type ChatTools = {
   createDocument: createDocumentTool;
-  // updateDocument: updateDocumentTool;
+  updateDocument: updateDocumentTool;
 };
 
 export type CustomUIDataTypes = {

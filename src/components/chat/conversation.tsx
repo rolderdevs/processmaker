@@ -16,6 +16,13 @@ import {
   ReasoningTrigger,
 } from "../ai-elements/reasoning";
 import { Response } from "../ai-elements/response";
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from "../ai-elements/tool";
 
 export const ChatConversation = ({
   messages,
@@ -69,23 +76,63 @@ export const ChatConversation = ({
                         )}
                     </Fragment>
                   );
-                // case "tool-call": {
-                //   const toolName = part.type.replace("tool-", "");
-                //   const input = part.input as { title?: string };
-                //   return (
-                //     <Message key={`${message.id}-${i}`} from={message.role}>
-                //       <MessageContent>
-                //         <div className="text-sm text-gray-600">
-                //           {toolName === "createDocument" &&
-                //             "🔧 Создаю документ: "}
-                //           {toolName === "updateDocument" &&
-                //             "✏️ Обновляю документ: "}
-                //           <strong>{input.title || "документ"}</strong>
-                //         </div>
-                //       </MessageContent>
-                //     </Message>
-                //   );
-                // }
+
+                case "tool-createDocument": {
+                  const createDocumentTool = message?.parts?.find(
+                    (part) => part.type === "tool-createDocument",
+                  );
+
+                  return (
+                    createDocumentTool && (
+                      <Tool key={`${message.id}-${i}`} defaultOpen={true}>
+                        <ToolHeader
+                          type="tool-createDocument"
+                          state={createDocumentTool.state}
+                        />
+                        <ToolContent>
+                          <ToolInput input={createDocumentTool.input} />
+                          <ToolOutput
+                            output={
+                              <Response>
+                                {createDocumentTool.output?.content}
+                              </Response>
+                            }
+                            errorText={createDocumentTool.errorText}
+                          />
+                        </ToolContent>
+                      </Tool>
+                    )
+                  );
+                }
+
+                case "tool-updateDocument": {
+                  const updateDocumentTool = message?.parts?.find(
+                    (part) => part.type === "tool-updateDocument",
+                  );
+
+                  return (
+                    updateDocumentTool && (
+                      <Tool key={`${message.id}-${i}`} defaultOpen={true}>
+                        <ToolHeader
+                          type="tool-updateDocument"
+                          state={updateDocumentTool.state}
+                        />
+                        <ToolContent>
+                          <ToolInput input={updateDocumentTool.input} />
+                          <ToolOutput
+                            output={
+                              <Response>
+                                {updateDocumentTool.output?.content}
+                              </Response>
+                            }
+                            errorText={updateDocumentTool.errorText}
+                          />
+                        </ToolContent>
+                      </Tool>
+                    )
+                  );
+                }
+
                 case "reasoning":
                   return (
                     <Reasoning
@@ -107,6 +154,7 @@ export const ChatConversation = ({
             })}
           </div>
         ))}
+
         {error && <div>Произошла ошибка: {error.message}</div>}
         {status === "submitted" && <Loader />}
       </ConversationContent>

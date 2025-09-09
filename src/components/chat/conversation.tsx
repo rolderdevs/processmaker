@@ -84,9 +84,9 @@ export const ChatConversation = ({
 
                   return (
                     createDocumentTool && (
-                      <Tool key={`${message.id}-${i}`} defaultOpen={true}>
+                      <Tool key={`${message.id}-${i}`}>
                         <ToolHeader
-                          type="tool-createDocument"
+                          type="Создание документа"
                           state={createDocumentTool.state}
                         />
                         <ToolContent>
@@ -112,9 +112,9 @@ export const ChatConversation = ({
 
                   return (
                     updateDocumentTool && (
-                      <Tool key={`${message.id}-${i}`} defaultOpen={true}>
+                      <Tool key={`${message.id}-${i}`}>
                         <ToolHeader
-                          type="tool-updateDocument"
+                          type="Редактирование документа"
                           state={updateDocumentTool.state}
                         />
                         <ToolContent>
@@ -143,6 +143,7 @@ export const ChatConversation = ({
                         i === message.parts.length - 1 &&
                         message.id === messages.at(-1)?.id
                       }
+                      defaultOpen={false}
                     >
                       <ReasoningTrigger />
                       <ReasoningContent>{part.text}</ReasoningContent>

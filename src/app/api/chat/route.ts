@@ -15,7 +15,7 @@ import {
 } from "ai";
 import type { ChatUIMessage, Document } from "@/lib/ai/types";
 import { createDocument, updateDocument } from "./document";
-import { systemPrompt } from "./promts";
+// import { systemPrompt } from "./promts";
 
 export const maxDuration = 60;
 

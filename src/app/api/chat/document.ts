@@ -21,7 +21,9 @@ export const createDocument = ({ model, dataStream }: DocumentProps) =>
       "Создать документ для написания или создания контента. Этот инструмент вызовет другие функции, которые будут генерировать содержимое документа на основе заголовка и описания.",
     inputSchema: z.object({
       title: z.string().describe("Заголовок документа"),
-      description: z.string().describe("Описание документа"),
+      description: z
+        .string()
+        .describe("Краткое описание документа на основе запроса пользователя"),
     }),
     execute: async ({ title, description }) => {
       dataStream.write({

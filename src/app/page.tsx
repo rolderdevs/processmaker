@@ -2,10 +2,20 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type LanguageModelUsage } from "ai";
+import { Check, CopyIcon } from "lucide-react";
 import { useState } from "react";
+import {
+  Artifact,
+  ArtifactAction,
+  ArtifactActions,
+  ArtifactContent,
+  ArtifactHeader,
+  ArtifactTitle,
+} from "@/components/ai-elements/artifact";
 import { Response } from "@/components/ai-elements/response";
 import { ChatInput } from "@/components/chat";
 import { ChatConversation } from "@/components/chat/conversation";
+import { DiffView } from "@/components/diffview";
 import { type Model, models } from "@/lib/ai";
 import type { ChatUIMessage, Document } from "@/lib/ai/types";
 
@@ -16,6 +26,7 @@ export default function Chat() {
     title: "",
     content: "",
   });
+  const [prevDocumentContent, setPrevDocumentContent] = useState("");
 
   const { messages, setMessages, sendMessage, regenerate, status, error } =
     useChat<ChatUIMessage>({
@@ -26,8 +37,10 @@ export default function Chat() {
       onData: (dataPart) => {
         if (dataPart.type === "data-title")
           setDocument((p) => ({ ...p, title: dataPart.data }));
-        if (dataPart.type === "data-clear")
+        if (dataPart.type === "data-clear") {
+          setPrevDocumentContent(document.content);
           setDocument((p) => ({ ...p, content: "" }));
+        }
         if (dataPart.type === "data-documentDelta")
           setDocument((p) => ({ ...p, content: p.content + dataPart.data }));
       },
@@ -37,8 +50,6 @@ export default function Chat() {
         }
       },
     });
-
-  // console.log(document.content);
 
   return (
     <div className="p-6 size-full h-screen flex gap-10">
@@ -61,27 +72,40 @@ export default function Chat() {
         />
       </div>
 
-      <div className="size-full pb-6 overflow-auto">
-        <Response>{document.content}</Response>
-        {/*<Artifact>
-          <ArtifactHeader>
-            <div>
-              <ArtifactTitle>{document.title}</ArtifactTitle>
-              <ArtifactDescription>Updated 1 minute ago</ArtifactDescription>
-            </div>
-            <ArtifactActions>
-              <ArtifactAction
-                icon={CopyIcon}
-                label="Скопировать"
-                tooltip="Скопировать в буфер обмена"
-              />
-            </ArtifactActions>
-          </ArtifactHeader>
-          <ArtifactContent>
+      <Artifact className="w-full">
+        <ArtifactHeader className="h-10">
+          <ArtifactTitle className="text-xl text-muted-foreground">
+            {document.title}
+          </ArtifactTitle>
+
+          <ArtifactActions className="ml-auto">
+            <ArtifactAction
+              icon={CopyIcon}
+              label="Скопировать"
+              tooltip="Скопировать в буфер обмена"
+              // onClick={() => copyToClipboard(document.content)}
+            />
+            <ArtifactAction
+              icon={Check}
+              label="Принять"
+              tooltip="Принять изменения"
+              onClick={() => {
+                setPrevDocumentContent(document.content);
+              }}
+            />
+          </ArtifactActions>
+        </ArtifactHeader>
+        <ArtifactContent>
+          {prevDocumentContent === document.content ? (
             <Response>{document.content}</Response>
-          </ArtifactContent>
-        </Artifact>*/}
-      </div>
+          ) : (
+            <DiffView
+              oldContent={prevDocumentContent}
+              newContent={document.content}
+            />
+          )}
+        </ArtifactContent>
+      </Artifact>
     </div>
   );
 }

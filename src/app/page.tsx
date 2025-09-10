@@ -4,6 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type LanguageModelUsage } from "ai";
 import { Check, CopyIcon } from "lucide-react";
 import { useState } from "react";
+import remarkGfm from "remark-gfm";
 import {
   Artifact,
   ArtifactAction,
@@ -24,9 +25,11 @@ export default function Chat() {
   const [usage, setUsage] = useState<LanguageModelUsage>();
   const [document, setDocument] = useState<Document>({
     title: "",
-    content: "",
+    content: "test",
   });
-  const [prevDocumentContent, setPrevDocumentContent] = useState("");
+  const [prevDocumentContent, setPrevDocumentContent] = useState(`test_old
+
+some`);
 
   const { messages, setMessages, sendMessage, regenerate, status, error } =
     useChat<ChatUIMessage>({
@@ -38,7 +41,7 @@ export default function Chat() {
         if (dataPart.type === "data-title")
           setDocument((p) => ({ ...p, title: dataPart.data }));
         if (dataPart.type === "data-clear") {
-          setPrevDocumentContent(document.content);
+          if (document.content) setPrevDocumentContent(document.content);
           setDocument((p) => ({ ...p, content: "" }));
         }
         if (dataPart.type === "data-documentDelta")
@@ -83,7 +86,9 @@ export default function Chat() {
               icon={CopyIcon}
               label="Скопировать"
               tooltip="Скопировать в буфер обмена"
-              // onClick={() => copyToClipboard(document.content)}
+              onClick={() =>
+                window.navigator.clipboard.writeText(document.content)
+              }
             />
             <ArtifactAction
               icon={Check}
@@ -97,7 +102,9 @@ export default function Chat() {
         </ArtifactHeader>
         <ArtifactContent>
           {prevDocumentContent === document.content ? (
-            <Response>{document.content}</Response>
+            <Response remarkPlugins={[[remarkGfm, { singleTilde: false }]]}>
+              {document.content}
+            </Response>
           ) : (
             <DiffView
               oldContent={prevDocumentContent}

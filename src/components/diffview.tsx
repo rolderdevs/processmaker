@@ -1,50 +1,21 @@
-import OrderedMap from "orderedmap";
-import {
-  DOMParser,
-  type MarkSpec,
-  type Node as ProsemirrorNode,
-  Schema,
-} from "prosemirror-model";
-import { schema } from "prosemirror-schema-basic";
-import { addListNodes } from "prosemirror-schema-list";
-import { EditorState } from "prosemirror-state";
-import { EditorView } from "prosemirror-view";
-import { useEffect, useRef } from "react";
-import { renderToString } from "react-dom/server";
+"use client";
+
+import { useMemo } from "react";
+import remarkDirective from "remark-directive";
 import { Streamdown } from "streamdown";
+import {
+  createMarkdownWithDiff,
+  remarkDirectiveReact,
+} from "@/lib/editor/diff";
 
-import { DiffType, diffEditor } from "@/lib/editor";
+type DirectiveComponent = {
+  children?: React.ReactNode;
+};
 
-const diffSchema = new Schema({
-  nodes: addListNodes(schema.spec.nodes, "paragraph block*", "block"),
-  marks: OrderedMap.from({
-    ...schema.spec.marks.toObject(),
-    diffMark: {
-      attrs: { type: { default: "" } },
-      toDOM(mark) {
-        let className = "";
-
-        switch (mark.attrs.type) {
-          case DiffType.Inserted:
-            className =
-              "bg-green-100 text-green-700 dark:bg-green-700/70 dark:text-green-200";
-            break;
-          case DiffType.Deleted:
-            className =
-              "bg-red-100 line-through text-red-600 dark:bg-red-600/70 dark:text-red-200";
-            break;
-          default:
-            className = "";
-        }
-        return ["span", { class: className }, 0];
-      },
-    } as MarkSpec,
-  }),
-});
-
-function computeDiff(oldDoc: ProsemirrorNode, newDoc: ProsemirrorNode) {
-  return diffEditor(diffSchema, oldDoc.toJSON(), newDoc.toJSON());
-}
+type CustomComponents = {
+  del: React.ComponentType<DirectiveComponent>;
+  add: React.ComponentType<DirectiveComponent>;
+};
 
 type DiffEditorProps = {
   oldContent: string;
@@ -52,49 +23,33 @@ type DiffEditorProps = {
 };
 
 export const DiffView = ({ oldContent, newContent }: DiffEditorProps) => {
-  const editorRef = useRef<HTMLDivElement>(null);
-  const viewRef = useRef<EditorView | null>(null);
-
-  useEffect(() => {
-    if (editorRef.current && !viewRef.current) {
-      const parser = DOMParser.fromSchema(diffSchema);
-
-      const oldHtmlContent = renderToString(
-        <Streamdown>{oldContent}</Streamdown>,
-      );
-      const newHtmlContent = renderToString(
-        <Streamdown>{newContent}</Streamdown>,
-      );
-
-      const oldContainer = document.createElement("div");
-      oldContainer.innerHTML = oldHtmlContent;
-
-      const newContainer = document.createElement("div");
-      newContainer.innerHTML = newHtmlContent;
-
-      const oldDoc = parser.parse(oldContainer);
-      const newDoc = parser.parse(newContainer);
-
-      const diffedDoc = computeDiff(oldDoc, newDoc);
-
-      const state = EditorState.create({
-        doc: diffedDoc,
-        plugins: [],
-      });
-
-      viewRef.current = new EditorView(editorRef.current, {
-        state,
-        editable: () => false,
-      });
-    }
-
-    return () => {
-      if (viewRef.current) {
-        viewRef.current.destroy();
-        viewRef.current = null;
-      }
-    };
+  const diffMarkdown = useMemo(() => {
+    return createMarkdownWithDiff(oldContent, newContent);
   }, [oldContent, newContent]);
 
-  return <div className="diff-editor" ref={editorRef} />;
+  return (
+    <div className="diff-editor">
+      <Streamdown
+        className="size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+        parseIncompleteMarkdown={false}
+        remarkPlugins={[remarkDirective, remarkDirectiveReact]}
+        components={
+          {
+            del: ({ children }: DirectiveComponent) => (
+              <span className="bg-red-100 line-through text-red-600 dark:bg-red-600/70 dark:text-red-200">
+                {children}
+              </span>
+            ),
+            add: ({ children }: DirectiveComponent) => (
+              <span className="bg-green-100 text-green-700 dark:bg-green-700/70 dark:text-green-200">
+                {children}
+              </span>
+            ),
+          } as Partial<CustomComponents>
+        }
+      >
+        {diffMarkdown}
+      </Streamdown>
+    </div>
+  );
 };

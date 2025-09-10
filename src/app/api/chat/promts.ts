@@ -1,6 +1,6 @@
 export const updateDocumentPrompt = (currentContent: string | null) =>
   `\
-Improve the following contents of the document based on the given prompt.
+Измените содержание документа на основе заданного промпта.
 
 ${currentContent}
 `;

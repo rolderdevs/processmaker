@@ -23,6 +23,7 @@ export const documentHandler = {
 
     const { fullStream } = streamText({
       model,
+      temperature: 0,
       system:
         "Создайте документ на основе предоставленного заголовка и описания. Используйте Markdown для структурирования текста. Включайте заголовки, где это необходимо.",
       experimental_transform: smoothStream({ chunking: "word" }),
@@ -60,8 +61,15 @@ export const documentHandler = {
   }) => {
     let draftContent = "";
 
+    console.log(
+      "Updating document...",
+      updateDocumentPrompt(document.content),
+      description,
+    );
+
     const { fullStream } = streamText({
       model,
+      temperature: 0,
       system: updateDocumentPrompt(document.content),
       experimental_transform: smoothStream({ chunking: "word" }),
       prompt: description,

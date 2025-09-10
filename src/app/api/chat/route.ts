@@ -21,16 +21,18 @@ export const maxDuration = 60;
 
 const openrouter = createOpenRouter();
 
+const document: Document = { title: "", content: "" };
+
 export async function POST(request: Request) {
   const {
-    document,
     messages,
     model,
   }: {
-    document: Document;
     messages: ChatUIMessage[];
     model: string;
   } = await request.json();
+
+  console.log("POST", JSON.stringify(document, null, 2));
 
   try {
     const openrouterModel = openrouter.chat(model);
@@ -49,11 +51,12 @@ export async function POST(request: Request) {
             createDocument: createDocument({
               model: openrouterModel,
               dataStream,
+              document,
             }),
             updateDocument: updateDocument({
               model: openrouterModel,
-              document,
               dataStream,
+              document,
             }),
           },
           providerOptions: {

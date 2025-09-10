@@ -137,7 +137,7 @@ export const ChatInput = ({
 
   return (
     <PromptInput
-      className="rounded-xl border shadow-sm transition-all duration-200 focus-within:border-border hover:border-muted-foreground/50"
+      className="rounded-xl relative border shadow-sm transition-all duration-200 focus-within:border-border hover:border-muted-foreground/50"
       onSubmit={handleSubmit}
       globalDrop
       multiple
@@ -158,7 +158,7 @@ export const ChatInput = ({
           usage={usage}
           modelId={model.priceModelId}
         >
-          <ContextTrigger className="absolute right-6 rounded-xl" />
+          <ContextTrigger className="absolute right-0 rounded-xl" />
           <ContextContent>
             <ContextContentHeader />
             <ContextContentBody>

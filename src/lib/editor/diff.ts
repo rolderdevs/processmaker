@@ -1,6 +1,6 @@
 import { diff_match_patch } from "diff-match-patch";
-import type { Node } from "unist";
-import { visit } from "unist-util-visit";
+import type { Data, Node } from "unist";
+import { type Visitor, visit } from "unist-util-visit";
 
 const DiffType = {
   Unchanged: 0,
@@ -8,21 +8,33 @@ const DiffType = {
   Inserted: 1,
 };
 
+interface DirectiveNode extends Node {
+  name: string;
+  attributes?: Record<string, unknown>;
+  data?: Data & {
+    hName?: string;
+    hProperties?: Record<string, unknown>;
+  };
+}
+
 export const remarkDirectiveReact = () => {
   return (tree: Node) => {
-    visit(tree, (node: any) => {
+    const visitor: Visitor = (node) => {
       if (
         node.type === "containerDirective" ||
         node.type === "leafDirective" ||
         node.type === "textDirective"
       ) {
-        const data = node.data || {};
-        node.data = data;
+        const directiveNode = node as DirectiveNode;
+        const data = directiveNode.data || {};
+        directiveNode.data = data;
 
-        data.hName = node.name;
-        data.hProperties = node.attributes || {};
+        data.hName = directiveNode.name;
+        data.hProperties = directiveNode.attributes || {};
       }
-    });
+    };
+
+    visit(tree, visitor);
   };
 };
 

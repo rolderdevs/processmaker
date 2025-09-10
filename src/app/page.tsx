@@ -25,11 +25,9 @@ export default function Chat() {
   const [usage, setUsage] = useState<LanguageModelUsage>();
   const [document, setDocument] = useState<Document>({
     title: "",
-    content: "test",
+    content: "",
   });
-  const [prevDocumentContent, setPrevDocumentContent] = useState(`test_old
-
-some`);
+  const [prevDocumentContent, setPrevDocumentContent] = useState("");
 
   const { messages, setMessages, sendMessage, regenerate, status, error } =
     useChat<ChatUIMessage>({

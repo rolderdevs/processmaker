@@ -15,7 +15,7 @@ import {
 } from "ai";
 import type { ChatUIMessage, Document } from "@/lib/ai/types";
 import { createDocument, updateDocument } from "./document";
-import { documentPrompt, systemPrompt } from "./promts";
+import { systemPrompt } from "./promts";
 
 export const maxDuration = 60;
 
@@ -40,7 +40,8 @@ export async function POST(request: Request) {
       execute: ({ writer: dataStream }) => {
         const result = streamText({
           model: openrouterModel,
-          system: `${systemPrompt}\n\n${documentPrompt}`,
+          temperature: 0,
+          system: systemPrompt,
           messages: convertToModelMessages(messages),
           stopWhen: stepCountIs(5),
           // activeTools: ["createDocument", "updateDocument"],

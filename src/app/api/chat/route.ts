@@ -15,7 +15,6 @@ import {
 } from "ai";
 import type { ChatUIMessage, Document } from "@/lib/ai/types";
 import { createDocument, updateDocument } from "./document";
-import { systemPrompt } from "./promts";
 
 export const maxDuration = 60;
 
@@ -27,9 +26,11 @@ export async function POST(request: Request) {
   const {
     messages,
     model,
+    system,
   }: {
     messages: ChatUIMessage[];
     model: string;
+    system?: string;
   } = await request.json();
 
   try {
@@ -41,10 +42,9 @@ export async function POST(request: Request) {
         const result = streamText({
           model: openrouterModel,
           temperature: 0,
-          system: systemPrompt,
+          system,
           messages: convertToModelMessages(messages),
           stopWhen: stepCountIs(5),
-          // activeTools: ["createDocument", "updateDocument"],
           experimental_transform: smoothStream({ chunking: "word" }),
           tools: {
             createDocument: createDocument({

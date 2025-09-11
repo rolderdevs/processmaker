@@ -28,6 +28,7 @@ export type ChatTools = {
 };
 
 export type CustomUIDataTypes = {
+  document: Document;
   documentDelta: string;
   appendMessage: string;
   title: string;

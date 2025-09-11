@@ -6,26 +6,35 @@ import { documentHandler } from "./documentHandler";
 type DocumentProps = {
   model: LanguageModel;
   dataStream: UIMessageStreamWriter<ChatUIMessage>;
+  document: Document;
 };
 
 type UpdateDocumentProps = {
   model: LanguageModel;
-  document: Document;
   dataStream: UIMessageStreamWriter<ChatUIMessage>;
+  document: Document;
 };
 
-export const createDocument = ({ model, dataStream }: DocumentProps) =>
+export const createDocument = ({
+  model,
+  dataStream,
+  document,
+}: DocumentProps) =>
   tool({
     name: "Создать документ",
     description:
-      "Создать документ для написания или создания контента. Этот инструмент вызовет другие функции, которые будут генерировать содержимое документа на основе заголовка и описания.",
+      "Создать документ. Этот инструмент вызовет другие функции, которые будут генерировать содержимое документа на основе заголовка и описания.",
     inputSchema: z.object({
       title: z.string().describe("Заголовок документа"),
       description: z
         .string()
-        .describe("Краткое описание документа на основе запроса пользователя"),
+        .describe(
+          "Краткое описание и требования к документу на основе запроса пользователя",
+        ),
     }),
     execute: async ({ title, description }) => {
+      document.title = title;
+
       dataStream.write({
         type: "data-title",
         data: title,
@@ -38,7 +47,7 @@ export const createDocument = ({ model, dataStream }: DocumentProps) =>
         transient: true,
       });
 
-      await documentHandler.onCreateDocument({
+      document.content = await documentHandler.onCreateDocument({
         model,
         title,
         description,
@@ -56,8 +65,8 @@ export const createDocument = ({ model, dataStream }: DocumentProps) =>
 
 export const updateDocument = ({
   model,
-  document,
   dataStream,
+  document,
 }: UpdateDocumentProps) =>
   tool({
     description: "Обновить документ с заданным описанием.",
@@ -71,7 +80,7 @@ export const updateDocument = ({
         transient: true,
       });
 
-      await documentHandler.onUpdateDocument({
+      document.content = await documentHandler.onUpdateDocument({
         model,
         document,
         description,

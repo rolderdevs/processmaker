@@ -15,19 +15,19 @@ import {
 } from "ai";
 import type { ChatUIMessage, Document } from "@/lib/ai/types";
 import { createDocument, updateDocument } from "./document";
-// import { systemPrompt } from "./promts";
+import { systemPrompt } from "./promts";
 
 export const maxDuration = 60;
 
 const openrouter = createOpenRouter();
 
+const document: Document = { title: "", content: "" };
+
 export async function POST(request: Request) {
   const {
-    document,
     messages,
     model,
   }: {
-    document: Document;
     messages: ChatUIMessage[];
     model: string;
   } = await request.json();
@@ -40,20 +40,22 @@ export async function POST(request: Request) {
       execute: ({ writer: dataStream }) => {
         const result = streamText({
           model: openrouterModel,
-          // system: systemPrompt,
+          temperature: 0,
+          system: systemPrompt,
           messages: convertToModelMessages(messages),
           stopWhen: stepCountIs(5),
-          experimental_activeTools: ["createDocument", "updateDocument"],
+          // activeTools: ["createDocument", "updateDocument"],
           experimental_transform: smoothStream({ chunking: "word" }),
           tools: {
             createDocument: createDocument({
               model: openrouterModel,
               dataStream,
+              document,
             }),
             updateDocument: updateDocument({
               model: openrouterModel,
-              document,
               dataStream,
+              document,
             }),
           },
           providerOptions: {

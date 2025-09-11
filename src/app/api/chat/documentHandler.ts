@@ -5,7 +5,14 @@ import {
   type UIMessageStreamWriter,
 } from "ai";
 import type { ChatUIMessage, Document } from "@/lib/ai/types";
-import { updateDocumentPrompt } from "./promts";
+
+const updateDocumentPrompt = (currentContent: string | null) =>
+  `\
+Ты — ассистент ИИ, который обновляет документ в формате Markdown. Твоя задача — применить изменения к существующему содержимому документа на основе запроса пользователя и вернуть **только** полный, обновленный документ в формате Markdown. Не добавляйте никаких комментариев, приветствий или объяснений.
+
+Текущее содержимое документа:
+${currentContent}
+`;
 
 export const documentHandler = {
   onCreateDocument: async ({
@@ -23,6 +30,7 @@ export const documentHandler = {
 
     const { fullStream } = streamText({
       model,
+      temperature: 0,
       system:
         "Создайте документ на основе предоставленного заголовка и описания. Используйте Markdown для структурирования текста. Включайте заголовки, где это необходимо.",
       experimental_transform: smoothStream({ chunking: "word" }),
@@ -62,6 +70,7 @@ export const documentHandler = {
 
     const { fullStream } = streamText({
       model,
+      temperature: 0,
       system: updateDocumentPrompt(document.content),
       experimental_transform: smoothStream({ chunking: "word" }),
       prompt: description,

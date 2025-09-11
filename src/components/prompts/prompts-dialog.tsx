@@ -43,7 +43,7 @@ export function PromptsDialog({
       setName(promptToEdit.name);
       setContent(promptToEdit.content);
     } else if (promptToCopy) {
-      setName(`${promptToCopy.name} (Copy)`);
+      setName(`${promptToCopy.name} (Копия)`);
       setContent(promptToCopy.content);
     } else {
       setName("");
@@ -61,9 +61,9 @@ export function PromptsDialog({
   };
 
   const getTitle = () => {
-    if (promptToEdit) return "Edit Prompt";
-    if (promptToCopy) return "Duplicate Prompt";
-    return "Create New Prompt";
+    if (promptToEdit) return "Редактировать промпт";
+    if (promptToCopy) return "Дублировать промпт";
+    return "Создать новый промпт";
   };
 
   return (
@@ -73,14 +73,14 @@ export function PromptsDialog({
           <DialogTitle>{getTitle()}</DialogTitle>
           <DialogDescription>
             {promptToEdit
-              ? "Edit your existing prompt."
-              : "Create a new prompt to use with the AI."}
+              ? "Отредактируйте ваш существующий промпт."
+              : "Создайте новый промпт для использования с ИИ."}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
-              Name
+              Название
             </Label>
             <Input
               id="name"
@@ -91,22 +91,22 @@ export function PromptsDialog({
           </div>
           <div className="grid grid-cols-4 items-start gap-4">
             <Label htmlFor="content" className="text-right pt-2">
-              Content
+              Содержание
             </Label>
             <Textarea
               id="content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               className="col-span-3 min-h-[300px]"
-              placeholder="Enter your prompt content here..."
+              placeholder="Введите содержание вашего промпта здесь..."
             />
           </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>
-            Cancel
+            Отмена
           </Button>
-          <Button onClick={handleSave}>Save</Button>
+          <Button onClick={handleSave}>Сохранить</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

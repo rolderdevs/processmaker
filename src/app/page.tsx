@@ -5,7 +5,7 @@ import { DefaultChatTransport, type LanguageModelUsage } from "ai";
 import { CopyIcon, ListTree } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import remarkGfm from "remark-gfm";
-import type { Prompt } from "@/app/api/prompts/types";
+
 import {
   Artifact,
   ArtifactAction,
@@ -27,7 +27,7 @@ export default function Chat() {
   const [model, setModel] = useState<Model>(models["google/gemini-2.5-flash"]);
   const {
     prompts,
-    loading: promptsLoading,
+
     addPrompt,
     updatePrompt,
     deletePrompt,
@@ -47,7 +47,9 @@ export default function Chat() {
   documentRef.current = document;
 
   useEffect(() => {
-    if (!selectedPromptId && prompts.length > 0) {
+    const selectedPromptExists = prompts.some((p) => p.id === selectedPromptId);
+
+    if ((!selectedPromptId || !selectedPromptExists) && prompts.length > 0) {
       const defaultPrompt = prompts.find((p) => p.isDefault);
       setSelectedPromptId(defaultPrompt?.id ?? prompts[0].id);
     }

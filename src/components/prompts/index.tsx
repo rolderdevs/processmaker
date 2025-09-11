@@ -10,6 +10,16 @@ import {
 import * as React from "react";
 
 import type { Prompt } from "@/app/api/prompts/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -54,6 +64,7 @@ export function PromptsManager({
   className,
 }: PromptsManagerProps) {
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [promptToEdit, setPromptToEdit] = React.useState<Prompt | undefined>();
   const [promptToCopy, setPromptToCopy] = React.useState<Prompt | undefined>();
 
@@ -82,12 +93,10 @@ export function PromptsManager({
     setDialogOpen(true);
   };
 
-  const handleDelete = async () => {
+  const confirmDelete = async () => {
     if (!selectedPrompt || selectedPrompt.isDefault) return;
-    // eslint-disable-next-line no-alert
-    if (window.confirm(`Delete "${selectedPrompt.name}" prompt?`)) {
-      await onDeletePrompt(selectedPrompt.id);
-    }
+    await onDeletePrompt(selectedPrompt.id);
+    setDeleteDialogOpen(false);
   };
 
   const handleSave = async (values: {
@@ -113,7 +122,7 @@ export function PromptsManager({
     <div className={`flex items-center gap-2 ${className}`}>
       <Select onValueChange={onSelectPrompt} value={selectedPromptId}>
         <SelectTrigger className="flex-1">
-          <SelectValue placeholder="Select a prompt..." />
+          <SelectValue placeholder="Выберите промпт..." />
         </SelectTrigger>
         <SelectContent>
           {prompts.map((prompt) => (
@@ -140,20 +149,20 @@ export function PromptsManager({
             disabled={!selectedPrompt || selectedPrompt.isDefault}
           >
             <PencilIcon className="mr-2 h-4 w-4" />
-            Edit
+            Редактировать
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleCopy} disabled={!selectedPrompt}>
             <CopyIcon className="mr-2 h-4 w-4" />
-            Duplicate
+            Дублировать
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={handleDelete}
+            onClick={() => setDeleteDialogOpen(true)}
             disabled={!selectedPrompt || selectedPrompt.isDefault}
             className="text-red-500 focus:text-red-500"
           >
             <Trash2Icon className="mr-2 h-4 w-4" />
-            Delete
+            Удалить
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -166,6 +175,27 @@ export function PromptsManager({
         promptToEdit={promptToEdit}
         promptToCopy={promptToCopy}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы действительно хотите удалить промпт "{selectedPrompt?.name}"?
+              Это действие нельзя будет отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -61,12 +61,6 @@ export const documentHandler = {
   }) => {
     let draftContent = "";
 
-    console.log(
-      "Updating document...",
-      updateDocumentPrompt(document.content),
-      description,
-    );
-
     const { fullStream } = streamText({
       model,
       temperature: 0,

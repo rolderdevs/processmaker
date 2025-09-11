@@ -2,8 +2,8 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type LanguageModelUsage } from "ai";
-import { Check, CopyIcon } from "lucide-react";
-import { useState } from "react";
+import { CopyIcon, ListTree } from "lucide-react";
+import { useRef, useState } from "react";
 import remarkGfm from "remark-gfm";
 import {
   Artifact,
@@ -28,6 +28,10 @@ export default function Chat() {
     content: "",
   });
   const [prevDocumentContent, setPrevDocumentContent] = useState("");
+  const [diffVisible, setDiffVisible] = useState(false);
+
+  const documentRef = useRef(document);
+  documentRef.current = document;
 
   const { messages, setMessages, sendMessage, regenerate, status, error } =
     useChat<ChatUIMessage>({
@@ -39,7 +43,7 @@ export default function Chat() {
         if (dataPart.type === "data-title")
           setDocument((p) => ({ ...p, title: dataPart.data }));
         if (dataPart.type === "data-clear") {
-          if (document.content) setPrevDocumentContent(document.content);
+          setPrevDocumentContent(documentRef.current.content);
           setDocument((p) => ({ ...p, content: "" }));
         }
         if (dataPart.type === "data-documentDelta")
@@ -89,17 +93,17 @@ export default function Chat() {
               }
             />
             <ArtifactAction
-              icon={Check}
-              label="Принять"
-              tooltip="Принять изменения"
+              icon={ListTree}
+              label="Показать изменения"
+              tooltip="Показать изменения"
               onClick={() => {
-                setPrevDocumentContent(document.content);
+                setDiffVisible((prev) => !prev);
               }}
             />
           </ArtifactActions>
         </ArtifactHeader>
         <ArtifactContent>
-          {prevDocumentContent === document.content ? (
+          {!diffVisible ? (
             <Response remarkPlugins={[[remarkGfm, { singleTilde: false }]]}>
               {document.content}
             </Response>

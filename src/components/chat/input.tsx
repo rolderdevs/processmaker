@@ -50,6 +50,7 @@ export const ChatInput = ({
   status,
   usage,
   error,
+  system,
 }: {
   model: Model;
   setModel: Dispatch<SetStateAction<Model>>;
@@ -108,6 +109,7 @@ export const ChatInput = ({
   status: ChatStatus;
   usage?: LanguageModelUsage;
   error: Error | undefined;
+  system?: string;
 }) => {
   const [input, setInput] = useState("");
 
@@ -128,10 +130,13 @@ export const ChatInput = ({
       ? await convertBlobFilesToDataURLs(message.files)
       : undefined;
 
-    sendMessage({
-      text: message.text || "Отправлено с вложениями",
-      files: convertedFiles,
-    });
+    sendMessage(
+      {
+        text: message.text || "Отправлено с вложениями",
+        files: convertedFiles,
+      },
+      { body: { system } },
+    );
     setInput("");
   };
 

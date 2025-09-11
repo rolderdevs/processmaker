@@ -3,8 +3,9 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type LanguageModelUsage } from "ai";
 import { CopyIcon, ListTree } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import remarkGfm from "remark-gfm";
+
 import {
   Artifact,
   ArtifactAction,
@@ -17,11 +18,23 @@ import { Response } from "@/components/ai-elements/response";
 import { ChatInput } from "@/components/chat";
 import { ChatConversation } from "@/components/chat/conversation";
 import { DiffView } from "@/components/diffview";
+import { PromptsManager } from "@/components/prompts";
 import { type Model, models } from "@/lib/ai";
 import type { ChatUIMessage, Document } from "@/lib/ai/types";
+import { usePrompts } from "@/lib/hooks/use-prompts";
 
 export default function Chat() {
   const [model, setModel] = useState<Model>(models["google/gemini-2.5-flash"]);
+  const {
+    prompts,
+
+    addPrompt,
+    updatePrompt,
+    deletePrompt,
+  } = usePrompts();
+  const [selectedPromptId, setSelectedPromptId] = useState<
+    string | undefined
+  >();
   const [usage, setUsage] = useState<LanguageModelUsage>();
   const [document, setDocument] = useState<Document>({
     title: "",
@@ -33,11 +46,28 @@ export default function Chat() {
   const documentRef = useRef(document);
   documentRef.current = document;
 
+  useEffect(() => {
+    const selectedPromptExists = prompts.some((p) => p.id === selectedPromptId);
+
+    if ((!selectedPromptId || !selectedPromptExists) && prompts.length > 0) {
+      const defaultPrompt = prompts.find((p) => p.isDefault);
+      setSelectedPromptId(defaultPrompt?.id ?? prompts[0].id);
+    }
+  }, [prompts, selectedPromptId]);
+
+  const selectedPrompt = useMemo(
+    () => prompts.find((p) => p.id === selectedPromptId),
+    [prompts, selectedPromptId],
+  );
+
   const { messages, setMessages, sendMessage, regenerate, status, error } =
     useChat<ChatUIMessage>({
       transport: new DefaultChatTransport({
         api: "/api/chat",
-        body: () => ({ model: model.value }),
+        body: () => ({
+          model: model.value,
+          system: selectedPrompt?.content,
+        }),
       }),
       onData: (dataPart) => {
         if (dataPart.type === "data-title")
@@ -65,6 +95,15 @@ export default function Chat() {
           status={status}
           error={error}
         />
+        <PromptsManager
+          prompts={prompts}
+          selectedPromptId={selectedPromptId}
+          onSelectPrompt={setSelectedPromptId}
+          onAddPrompt={addPrompt}
+          onUpdatePrompt={updatePrompt}
+          onDeletePrompt={deletePrompt}
+          className="mb-4"
+        />
         <ChatInput
           model={model}
           setModel={setModel}
@@ -74,6 +113,7 @@ export default function Chat() {
           status={status}
           usage={usage}
           error={error}
+          system={selectedPrompt?.content}
         />
       </div>
 

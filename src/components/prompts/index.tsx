@@ -83,6 +83,12 @@ export function PromptsManager({
     setDialogOpen(true);
   };
 
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setPromptToEdit(undefined);
+    setPromptToCopy(undefined);
+  };
+
   const handleEdit = () => {
     if (!selectedPrompt || selectedPrompt.isDefault) return;
     setPromptToEdit(selectedPrompt);
@@ -137,6 +143,8 @@ export function PromptsManager({
       }
 
       setDialogOpen(false);
+      setPromptToEdit(undefined);
+      setPromptToCopy(undefined);
     } catch (error) {
       console.error("Error saving prompt:", error);
       throw error;
@@ -213,7 +221,7 @@ export function PromptsManager({
       <PromptsDialog
         key={`${promptToEdit?.id ?? ""}-${promptToCopy?.id ?? ""}`}
         isOpen={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        onClose={handleCloseDialog}
         onSave={handleSave}
         promptToEdit={promptToEdit}
         promptToCopy={promptToCopy}

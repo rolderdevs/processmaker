@@ -2,14 +2,13 @@
 
 import {
   CopyIcon,
+  Loader2Icon,
   MoreVertical,
   PencilIcon,
   PlusIcon,
   Trash2Icon,
 } from "lucide-react";
 import * as React from "react";
-
-import type { Prompt } from "@/app/api/prompts/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,48 +34,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { usePrompts } from "@/contexts";
+import type { Prompt } from "@/lib/db";
 import { PromptsDialog } from "./prompts-dialog";
 
 interface PromptsManagerProps {
-  prompts: Prompt[];
-  selectedPromptId: string | undefined;
-  onSelectPrompt: (promptId: string) => void;
-  onAddPrompt: (
-    values:
-      | { name: string; content: string }
-      | { name: string; copyFromId: string },
-  ) => Promise<void>;
-  onUpdatePrompt: (
-    promptId: string,
-    values: { name: string; content: string },
-  ) => Promise<void>;
-  onDeletePrompt: (promptId: string) => Promise<void>;
   className?: string;
 }
 
-export function PromptsManager({
-  prompts,
-  selectedPromptId,
-  onSelectPrompt,
-  onAddPrompt,
-  onUpdatePrompt,
-  onDeletePrompt,
-  className,
-}: PromptsManagerProps) {
+export function PromptsManager({ className }: PromptsManagerProps) {
+  const {
+    prompts,
+    selectedPromptId,
+    selectedPrompt,
+    selectPrompt,
+    addPrompt,
+    updatePrompt,
+    deletePrompt,
+  } = usePrompts();
+
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [promptToEdit, setPromptToEdit] = React.useState<Prompt | undefined>();
   const [promptToCopy, setPromptToCopy] = React.useState<Prompt | undefined>();
-
-  const selectedPrompt = React.useMemo(
-    () => prompts.find((p) => p.id === selectedPromptId),
-    [prompts, selectedPromptId],
-  );
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const handleCreateNew = () => {
     setPromptToEdit(undefined);
     setPromptToCopy(undefined);
     setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setPromptToEdit(undefined);
+    setPromptToCopy(undefined);
   };
 
   const handleEdit = () => {
@@ -95,73 +87,114 @@ export function PromptsManager({
 
   const confirmDelete = async () => {
     if (!selectedPrompt || selectedPrompt.isDefault) return;
-    await onDeletePrompt(selectedPrompt.id);
-    setDeleteDialogOpen(false);
+    setIsLoading(true);
+    try {
+      await deletePrompt(selectedPrompt.id);
+      setDeleteDialogOpen(false);
+    } catch (error) {
+      console.error("Error deleting prompt:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSave = async (values: {
-    name: string;
+    title: string;
     content: string;
     copyFromId?: string;
   }) => {
-    if (promptToEdit) {
-      await onUpdatePrompt(promptToEdit.id, {
-        name: values.name,
-        content: values.content,
-      });
-    } else if (values.copyFromId) {
-      await onAddPrompt({ name: values.name, copyFromId: values.copyFromId });
-    } else {
-      await onAddPrompt({ name: values.name, content: values.content });
-    }
+    setIsLoading(true);
+    try {
+      if (promptToEdit) {
+        await updatePrompt(promptToEdit.id, {
+          title: values.title,
+          content: values.content,
+        });
+      } else if (values.copyFromId) {
+        const newPromptId = await addPrompt({
+          title: values.title,
+          copyFromId: values.copyFromId,
+        });
+        selectPrompt(newPromptId);
+      } else {
+        const newPromptId = await addPrompt({
+          title: values.title,
+          content: values.content,
+        });
+        selectPrompt(newPromptId);
+      }
 
-    setDialogOpen(false);
+      setDialogOpen(false);
+      setPromptToEdit(undefined);
+      setPromptToCopy(undefined);
+    } catch (error) {
+      console.error("Error saving prompt:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <Select onValueChange={onSelectPrompt} value={selectedPromptId}>
+      <Select
+        disabled={isLoading}
+        onValueChange={selectPrompt}
+        value={selectedPromptId || ""}
+      >
         <SelectTrigger className="flex-1">
           <SelectValue placeholder="Выберите промпт..." />
         </SelectTrigger>
         <SelectContent>
           {prompts.map((prompt) => (
             <SelectItem key={prompt.id} value={prompt.id}>
-              {prompt.name}
+              {prompt.title}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
 
-      <Button variant="outline" size="icon" onClick={handleCreateNew}>
-        <PlusIcon className="h-4 w-4" />
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={handleCreateNew}
+        disabled={isLoading}
+      >
+        {isLoading ? <Loader2Icon className="animate-spin" /> : <PlusIcon />}
       </Button>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" disabled={!selectedPrompt}>
-            <MoreVertical className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled={!selectedPrompt || isLoading}
+          >
+            <MoreVertical />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem
             onClick={handleEdit}
-            disabled={!selectedPrompt || selectedPrompt.isDefault}
+            disabled={!selectedPrompt || selectedPrompt.isDefault || isLoading}
           >
-            <PencilIcon className="mr-2 h-4 w-4" />
+            <PencilIcon />
             Редактировать
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleCopy} disabled={!selectedPrompt}>
-            <CopyIcon className="mr-2 h-4 w-4" />
+          <DropdownMenuItem
+            onClick={handleCopy}
+            disabled={!selectedPrompt || isLoading}
+          >
+            <CopyIcon />
             Дублировать
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => setDeleteDialogOpen(true)}
-            disabled={!selectedPrompt || selectedPrompt.isDefault}
+            disabled={!selectedPrompt || selectedPrompt.isDefault || isLoading}
             className="text-red-500 focus:text-red-500"
           >
-            <Trash2Icon className="mr-2 h-4 w-4" />
+            <Trash2Icon />
             Удалить
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -170,7 +203,7 @@ export function PromptsManager({
       <PromptsDialog
         key={`${promptToEdit?.id ?? ""}-${promptToCopy?.id ?? ""}`}
         isOpen={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        onClose={handleCloseDialog}
         onSave={handleSave}
         promptToEdit={promptToEdit}
         promptToCopy={promptToCopy}
@@ -181,17 +214,25 @@ export function PromptsManager({
           <AlertDialogHeader>
             <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
             <AlertDialogDescription>
-              Вы действительно хотите удалить промпт "{selectedPrompt?.name}"?
+              Вы действительно хотите удалить промпт "{selectedPrompt?.title}"?
               Это действие нельзя будет отменить.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogCancel disabled={isLoading}>Отмена</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
+              disabled={isLoading}
               className="bg-red-500 hover:bg-red-600"
             >
-              Удалить
+              {isLoading ? (
+                <>
+                  <Loader2Icon className="animate-spin" />
+                  Удаление...
+                </>
+              ) : (
+                "Удалить"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

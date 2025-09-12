@@ -1,0 +1,1 @@
+export { DocumentArtifact } from "./artifact";

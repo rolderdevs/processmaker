@@ -20,7 +20,7 @@ interface PromptsDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (values: {
-    name: string;
+    title: string;
     content: string;
     copyFromId?: string;
   }) => void;
@@ -35,26 +35,26 @@ export function PromptsDialog({
   promptToEdit,
   promptToCopy,
 }: PromptsDialogProps) {
-  const [name, setName] = React.useState("");
+  const [title, setTitle] = React.useState("");
   const [content, setContent] = React.useState("");
 
   React.useEffect(() => {
     if (promptToEdit) {
-      setName(promptToEdit.name);
+      setTitle(promptToEdit.title);
       setContent(promptToEdit.content);
     } else if (promptToCopy) {
-      setName(`${promptToCopy.name} (Копия)`);
+      setTitle(`${promptToCopy.title} (Копия)`);
       setContent(promptToCopy.content);
     } else {
-      setName("");
+      setTitle("");
       setContent("");
     }
   }, [promptToEdit, promptToCopy]);
 
   const handleSave = () => {
-    if (!name.trim()) return;
+    if (!title.trim()) return;
     onSave({
-      name,
+      title,
       content,
       copyFromId: promptToCopy?.id,
     });
@@ -73,19 +73,19 @@ export function PromptsDialog({
           <DialogTitle>{getTitle()}</DialogTitle>
           <DialogDescription>
             {promptToEdit
-              ? "Отредактируйте ваш существующий промпт."
-              : "Создайте новый промпт для использования с ИИ."}
+              ? "Отредактируйте существующий промпт."
+              : "Создайте новый промпт."}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
+            <Label htmlFor="title" className="text-right">
               Название
             </Label>
             <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="col-span-3"
             />
           </div>
@@ -98,7 +98,7 @@ export function PromptsDialog({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               className="col-span-3 min-h-[300px]"
-              placeholder="Введите содержание вашего промпта здесь..."
+              placeholder="Введите содержание промпта здесь..."
             />
           </div>
         </div>

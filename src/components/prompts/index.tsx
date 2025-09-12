@@ -43,12 +43,12 @@ interface PromptsManagerProps {
   onSelectPrompt: (promptId: string) => void;
   onAddPrompt: (
     values:
-      | { name: string; content: string }
-      | { name: string; copyFromId: string },
+      | { title: string; content: string }
+      | { title: string; copyFromId: string },
   ) => Promise<void>;
   onUpdatePrompt: (
     promptId: string,
-    values: { name: string; content: string },
+    values: { title: string; content: string },
   ) => Promise<void>;
   onDeletePrompt: (promptId: string) => Promise<void>;
   className?: string;
@@ -100,19 +100,19 @@ export function PromptsManager({
   };
 
   const handleSave = async (values: {
-    name: string;
+    title: string;
     content: string;
     copyFromId?: string;
   }) => {
     if (promptToEdit) {
       await onUpdatePrompt(promptToEdit.id, {
-        name: values.name,
+        title: values.title,
         content: values.content,
       });
     } else if (values.copyFromId) {
-      await onAddPrompt({ name: values.name, copyFromId: values.copyFromId });
+      await onAddPrompt({ title: values.title, copyFromId: values.copyFromId });
     } else {
-      await onAddPrompt({ name: values.name, content: values.content });
+      await onAddPrompt({ title: values.title, content: values.content });
     }
 
     setDialogOpen(false);
@@ -127,7 +127,7 @@ export function PromptsManager({
         <SelectContent>
           {prompts.map((prompt) => (
             <SelectItem key={prompt.id} value={prompt.id}>
-              {prompt.name}
+              {prompt.title}
             </SelectItem>
           ))}
         </SelectContent>
@@ -181,7 +181,7 @@ export function PromptsManager({
           <AlertDialogHeader>
             <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
             <AlertDialogDescription>
-              Вы действительно хотите удалить промпт "{selectedPrompt?.name}"?
+              Вы действительно хотите удалить промпт "{selectedPrompt?.title}"?
               Это действие нельзя будет отменить.
             </AlertDialogDescription>
           </AlertDialogHeader>

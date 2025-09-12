@@ -1,7 +1,10 @@
 export interface Prompt {
   id: string;
-  name: string;
+  title: string;
   content: string;
-  updatedAt: string;
+  time: {
+    created: string;
+    updated: string;
+  };
   isDefault?: boolean;
 }

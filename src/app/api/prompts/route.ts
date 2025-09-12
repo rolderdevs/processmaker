@@ -1,29 +1,68 @@
-import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
-import path from "path";
+import { getDB, StringRecordId } from "@/lib/db";
 import type { Prompt } from "./types";
-
-const promptsFilePath = path.join(
-  process.cwd(),
-  "src/app/api/prompts/prompts.json",
-);
 
 async function getPrompts(): Promise<Prompt[]> {
   try {
-    const data = await fs.readFile(promptsFilePath, "utf-8");
-    return JSON.parse(data);
+    const db = await getDB();
+    const rawPrompts = await db.select("prompt");
+
+    // Convert RecordId to string for frontend
+    const prompts = (rawPrompts || []).map(
+      (prompt: { id: { toString(): string }; [key: string]: unknown }) => ({
+        ...prompt,
+        id: prompt.id.toString(),
+      }),
+    ) as Prompt[];
+
+    return prompts;
   } catch (error) {
-    // If the file doesn't exist, we can return an empty array or handle it differently
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return [];
-    }
-    throw error;
+    console.error("Failed to fetch prompts from database:", error);
+    return [];
   }
 }
 
-async function savePrompts(prompts: Prompt[]) {
-  const data = JSON.stringify(prompts, null, 2);
-  await fs.writeFile(promptsFilePath, data, "utf-8");
+async function createPrompt(
+  promptData: Omit<Prompt, "id" | "time">,
+): Promise<Prompt> {
+  const db = await getDB();
+  const result = await db.create("prompt", promptData);
+
+  // db.create returns array, take first element
+  const record = Array.isArray(result) ? result[0] : result;
+
+  // Convert RecordId to string for frontend
+  const typedResult = record as unknown as {
+    id: { toString(): string };
+    [key: string]: unknown;
+  };
+  return {
+    ...typedResult,
+    id: typedResult.id.toString(),
+  } as Prompt;
+}
+
+async function updatePrompt(
+  id: string,
+  updates: Partial<Prompt>,
+): Promise<Prompt> {
+  const db = await getDB();
+  const result = await db.merge(new StringRecordId(id), updates);
+
+  // Convert RecordId to string for frontend
+  const typedResult = result as unknown as {
+    id: { toString(): string };
+    [key: string]: unknown;
+  };
+  return {
+    ...typedResult,
+    id: typedResult.id.toString(),
+  } as Prompt;
+}
+
+async function deletePrompt(id: string): Promise<void> {
+  const db = await getDB();
+  await db.delete(new StringRecordId(id));
 }
 
 export async function GET() {
@@ -42,46 +81,49 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, content, copyFromId } = body;
+    const { name, title, content, copyFromId } = body;
 
-    if (!name || !content) {
-      // Basic validation
+    // Accept both 'name' and 'title' for backwards compatibility
+    const promptTitle = title || name;
+
+    if (!promptTitle || !content) {
       if (!copyFromId) {
         return NextResponse.json(
-          { message: "Name and content are required" },
+          { message: "Title and content are required" },
           { status: 400 },
         );
       }
     }
 
-    const prompts = await getPrompts();
     let newPrompt: Prompt;
 
     if (copyFromId) {
-      const promptToCopy = prompts.find((p) => p.id === copyFromId);
-      if (!promptToCopy) {
+      const db = await getDB();
+      const rawPromptToCopy = await db.select(new StringRecordId(copyFromId));
+
+      if (!rawPromptToCopy) {
         return NextResponse.json(
           { message: "Prompt to copy from not found" },
           { status: 404 },
         );
       }
-      newPrompt = {
-        id: crypto.randomUUID(),
-        name: name || `${promptToCopy.name} (Copy)`,
-        content: promptToCopy.content,
-        updatedAt: new Date().toISOString(),
-      };
-    } else {
-      newPrompt = {
-        id: crypto.randomUUID(),
-        name,
-        content,
-        updatedAt: new Date().toISOString(),
-      };
-    }
 
-    prompts.push(newPrompt);
-    await savePrompts(prompts);
+      const copyData = rawPromptToCopy as unknown as {
+        title: string;
+        content: string;
+        [key: string]: unknown;
+      };
+
+      newPrompt = await createPrompt({
+        title: promptTitle || `${copyData.title} (Copy)`,
+        content: copyData.content,
+      });
+    } else {
+      newPrompt = await createPrompt({
+        title: promptTitle,
+        content,
+      });
+    }
 
     return NextResponse.json(newPrompt, { status: 201 });
   } catch (error) {
@@ -95,41 +137,46 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const body: Partial<Prompt> & { id: string } = await request.json();
-    const { id, name, content } = body;
+    const body = await request.json();
+    const { id, name, title, content } = body;
 
     if (!id) {
       return NextResponse.json({ message: "ID is required" }, { status: 400 });
     }
 
-    const prompts = await getPrompts();
-    const promptIndex = prompts.findIndex((p) => p.id === id);
+    const db = await getDB();
+    const rawExistingPrompt = await db.select(new StringRecordId(id));
 
-    if (promptIndex === -1) {
+    if (!rawExistingPrompt) {
       return NextResponse.json(
         { message: "Prompt not found" },
         { status: 404 },
       );
     }
 
-    const promptToUpdate = prompts[promptIndex];
-
-    if (promptToUpdate.isDefault) {
+    const existingPrompt = rawExistingPrompt as {
+      isDefault?: boolean;
+      [key: string]: unknown;
+    };
+    if (existingPrompt?.isDefault) {
       return NextResponse.json(
         { message: "Cannot modify the default prompt" },
         { status: 403 },
       );
     }
 
-    const updatedPrompt = {
-      ...promptToUpdate,
-      name: name ?? promptToUpdate.name,
-      content: content ?? promptToUpdate.content,
-      updatedAt: new Date().toISOString(),
-    };
+    const updates: Partial<Prompt> = {};
 
-    prompts[promptIndex] = updatedPrompt;
-    await savePrompts(prompts);
+    // Accept both 'name' and 'title' for backwards compatibility
+    const promptTitle = title || name;
+    if (promptTitle !== undefined) {
+      updates.title = promptTitle;
+    }
+    if (content !== undefined) {
+      updates.content = content;
+    }
+
+    const updatedPrompt = await updatePrompt(id, updates);
 
     return NextResponse.json(updatedPrompt);
   } catch (error) {
@@ -149,26 +196,23 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ message: "ID is required" }, { status: 400 });
     }
 
-    const prompts = await getPrompts();
-    const promptToDelete = prompts.find((p) => p.id === id);
+    const db = await getDB();
+    const rawExistingPrompt = await db.select(new StringRecordId(id));
 
-    if (!promptToDelete) {
-      // Allow deletion request to succeed even if prompt doesn't exist
-      return NextResponse.json(
-        { message: "Prompt deleted successfully" },
-        { status: 200 },
-      );
+    if (rawExistingPrompt) {
+      const existingPrompt = rawExistingPrompt as {
+        isDefault?: boolean;
+        [key: string]: unknown;
+      };
+      if (existingPrompt.isDefault) {
+        return NextResponse.json(
+          { message: "Cannot delete the default prompt" },
+          { status: 403 },
+        );
+      }
     }
 
-    if (promptToDelete.isDefault) {
-      return NextResponse.json(
-        { message: "Cannot delete the default prompt" },
-        { status: 403 },
-      );
-    }
-
-    const updatedPrompts = prompts.filter((p) => p.id !== id);
-    await savePrompts(updatedPrompts);
+    await deletePrompt(id);
 
     return NextResponse.json({ message: "Prompt deleted successfully" });
   } catch (error) {

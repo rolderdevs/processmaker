@@ -26,7 +26,7 @@ export function usePrompts() {
       data.sort((a, b) => {
         if (a.isDefault) return -1;
         if (b.isDefault) return 1;
-        return a.name.localeCompare(b.name);
+        return a.title.localeCompare(b.title);
       });
       setState({ prompts: data, loading: false, error: null });
     } catch (error) {
@@ -42,8 +42,8 @@ export function usePrompts() {
   const addPrompt = useCallback(
     async (
       values:
-        | { name: string; content: string }
-        | { name: string; copyFromId: string },
+        | { title: string; content: string }
+        | { title: string; copyFromId: string },
     ) => {
       try {
         const response = await fetch("/api/prompts", {
@@ -64,7 +64,7 @@ export function usePrompts() {
   );
 
   const updatePrompt = useCallback(
-    async (promptId: string, values: { name: string; content: string }) => {
+    async (promptId: string, values: { title: string; content: string }) => {
       try {
         const response = await fetch("/api/prompts", {
           method: "PUT",

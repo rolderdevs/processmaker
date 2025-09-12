@@ -1,12 +1,6 @@
-import type {
-  ChatRequestOptions,
-  ChatStatus,
-  FileUIPart,
-  LanguageModelUsage,
-} from "ai";
-import { type Dispatch, type SetStateAction, useState } from "react";
-import { type Model, models } from "@/lib/ai";
-import type { ChatUIMessage } from "@/lib/ai/types";
+import { useState } from "react";
+import { useChat } from "@/contexts";
+import { models } from "@/lib/ai";
 import { convertBlobFilesToDataURLs } from "@/lib/utils";
 import {
   Context,
@@ -41,76 +35,17 @@ import {
   PromptInputTools,
 } from "../ai-elements/prompt-input";
 
-export const ChatInput = ({
-  model,
-  setModel,
-  messages,
-  setMessages,
-  sendMessage,
-  status,
-  usage,
-  error,
-  system,
-}: {
-  model: Model;
-  setModel: Dispatch<SetStateAction<Model>>;
-  messages: ChatUIMessage[];
-  setMessages: (
-    messages:
-      | ChatUIMessage[]
-      | ((messages: ChatUIMessage[]) => ChatUIMessage[]),
-  ) => void;
-  sendMessage: (
-    message?:
-      | (Omit<ChatUIMessage, "id" | "role"> & {
-          id?: string | undefined;
-          role?: "system" | "user" | "assistant" | undefined;
-        } & {
-          text?: never;
-          files?: never;
-          messageId?: string;
-        })
-      | {
-          text: string;
-          files?: FileList | FileUIPart[];
-          metadata?:
-            | {
-                usage: {
-                  inputTokens: number;
-                  outputTokens: number;
-                  totalTokens: number;
-                  reasoningTokens: number;
-                  cachedInputTokens: number;
-                };
-              }
-            | undefined;
-          parts?: never;
-          messageId?: string;
-        }
-      | {
-          files: FileList | FileUIPart[];
-          metadata?:
-            | {
-                usage: {
-                  inputTokens: number;
-                  outputTokens: number;
-                  totalTokens: number;
-                  reasoningTokens: number;
-                  cachedInputTokens: number;
-                };
-              }
-            | undefined;
-          parts?: never;
-          messageId?: string;
-        }
-      | undefined,
-    options?: ChatRequestOptions,
-  ) => Promise<void>;
-  status: ChatStatus;
-  usage?: LanguageModelUsage;
-  error: Error | undefined;
-  system?: string;
-}) => {
+export const ChatInput = () => {
+  const {
+    model,
+    setModel,
+    messages,
+    setMessages,
+    sendMessage,
+    status,
+    usage,
+    error,
+  } = useChat();
   const [input, setInput] = useState("");
 
   const handleSubmit = async (message: PromptInputMessage) => {
@@ -130,13 +65,10 @@ export const ChatInput = ({
       ? await convertBlobFilesToDataURLs(message.files)
       : undefined;
 
-    sendMessage(
-      {
-        text: message.text || "Отправлено с вложениями",
-        files: convertedFiles,
-      },
-      { body: { system } },
-    );
+    sendMessage({
+      text: message.text || "Отправлено с вложениями",
+      files: convertedFiles,
+    });
     setInput("");
   };
 

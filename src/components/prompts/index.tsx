@@ -34,48 +34,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { usePrompts } from "@/contexts";
 import type { Prompt } from "@/lib/db";
 import { PromptsDialog } from "./prompts-dialog";
 
 interface PromptsManagerProps {
-  prompts: Prompt[];
-  selectedPromptId: string;
-  onSelectPrompt: (promptId: string) => void;
-  onAddPrompt: (
-    values:
-      | { title: string; content: string }
-      | { title: string; copyFromId: string },
-  ) => Promise<string>;
-  onUpdatePrompt: (
-    promptId: string,
-    values: { title: string; content: string },
-  ) => Promise<void>;
-  onDeletePrompt: (promptId: string) => Promise<void>;
   className?: string;
 }
 
-export function PromptsManager({
-  prompts,
-  selectedPromptId,
-  onSelectPrompt,
-  onAddPrompt,
-  onUpdatePrompt,
-  onDeletePrompt,
-  className,
-}: PromptsManagerProps) {
+export function PromptsManager({ className }: PromptsManagerProps) {
+  const {
+    prompts,
+    selectedPromptId,
+    selectedPrompt,
+    selectPrompt,
+    addPrompt,
+    updatePrompt,
+    deletePrompt,
+  } = usePrompts();
+
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [promptToEdit, setPromptToEdit] = React.useState<Prompt | undefined>();
   const [promptToCopy, setPromptToCopy] = React.useState<Prompt | undefined>();
   const [isLoading, setIsLoading] = React.useState(false);
-
-  const selectedPrompt = React.useMemo(
-    () =>
-      selectedPromptId
-        ? prompts.find((p) => p.id === selectedPromptId)
-        : undefined,
-    [prompts, selectedPromptId],
-  );
 
   const handleCreateNew = () => {
     setPromptToEdit(undefined);
@@ -107,7 +89,7 @@ export function PromptsManager({
     if (!selectedPrompt || selectedPrompt.isDefault) return;
     setIsLoading(true);
     try {
-      await onDeletePrompt(selectedPrompt.id);
+      await deletePrompt(selectedPrompt.id);
       setDeleteDialogOpen(false);
     } catch (error) {
       console.error("Error deleting prompt:", error);
@@ -124,22 +106,22 @@ export function PromptsManager({
     setIsLoading(true);
     try {
       if (promptToEdit) {
-        await onUpdatePrompt(promptToEdit.id, {
+        await updatePrompt(promptToEdit.id, {
           title: values.title,
           content: values.content,
         });
       } else if (values.copyFromId) {
-        const newPromptId = await onAddPrompt({
+        const newPromptId = await addPrompt({
           title: values.title,
           copyFromId: values.copyFromId,
         });
-        onSelectPrompt(newPromptId);
+        selectPrompt(newPromptId);
       } else {
-        const newPromptId = await onAddPrompt({
+        const newPromptId = await addPrompt({
           title: values.title,
           content: values.content,
         });
-        onSelectPrompt(newPromptId);
+        selectPrompt(newPromptId);
       }
 
       setDialogOpen(false);
@@ -157,7 +139,7 @@ export function PromptsManager({
     <div className={`flex items-center gap-2 ${className}`}>
       <Select
         disabled={isLoading}
-        onValueChange={onSelectPrompt}
+        onValueChange={selectPrompt}
         value={selectedPromptId || ""}
       >
         <SelectTrigger className="flex-1">

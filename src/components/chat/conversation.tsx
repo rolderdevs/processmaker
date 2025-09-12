@@ -1,7 +1,6 @@
-import type { ChatRequestOptions, ChatStatus } from "ai";
 import { CopyIcon, RefreshCcwIcon } from "lucide-react";
 import { Fragment } from "react";
-import type { ChatUIMessage } from "@/lib/ai/types";
+import { useChat } from "@/contexts";
 import { Action, Actions } from "../ai-elements/actions";
 import {
   Conversation,
@@ -24,22 +23,8 @@ import {
   ToolOutput,
 } from "../ai-elements/tool";
 
-export const ChatConversation = ({
-  messages,
-  regenerate,
-  status,
-  error,
-}: {
-  messages: ChatUIMessage[];
-  regenerate: ({
-    messageId,
-    ...options
-  }?: {
-    messageId?: string;
-  } & ChatRequestOptions) => Promise<void>;
-  status: ChatStatus;
-  error: Error | undefined;
-}) => {
+export const ChatConversation = () => {
+  const { messages, regenerate, status, error } = useChat();
   return (
     <Conversation>
       <ConversationContent>

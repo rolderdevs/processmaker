@@ -115,6 +115,19 @@ export default function Chat() {
           status={status}
           error={error}
         />
+
+        <ChatInput
+          model={model}
+          setModel={setModel}
+          messages={messages}
+          setMessages={setMessages}
+          sendMessage={sendMessage}
+          status={status}
+          usage={usage}
+          error={error}
+          system={selectedPrompt?.content}
+        />
+
         <PromptsManager
           prompts={prompts}
           selectedPromptId={selectedPromptId}
@@ -127,18 +140,7 @@ export default function Chat() {
           onAddPrompt={addPrompt}
           onUpdatePrompt={updatePrompt}
           onDeletePrompt={deletePrompt}
-          className="mb-4"
-        />
-        <ChatInput
-          model={model}
-          setModel={setModel}
-          messages={messages}
-          setMessages={setMessages}
-          sendMessage={sendMessage}
-          status={status}
-          usage={usage}
-          error={error}
-          system={selectedPrompt?.content}
+          className="mt-4"
         />
       </div>
 

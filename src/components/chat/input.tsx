@@ -151,12 +151,14 @@ export const ChatInput = ({
         <PromptInputAttachments>
           {(attachment) => <PromptInputAttachment data={attachment} />}
         </PromptInputAttachments>
+
         <PromptInputTextarea
           className="text-sm resize-none py-3 px-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] bg-transparent !border-0 !border-none outline-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none placeholder:text-muted-foreground min-h-20"
           onChange={(e) => setInput(e.target.value)}
           autoFocus
           value={input}
         />
+
         <Context
           maxTokens={model.context}
           usedTokens={usage?.totalTokens || 0}
@@ -176,14 +178,8 @@ export const ChatInput = ({
           </ContextContent>
         </Context>
       </PromptInputBody>
-      <PromptInputToolbar>
-        <PromptInputTools>
-          <PromptInputActionMenu>
-            <PromptInputActionMenuTrigger />
-            <PromptInputActionMenuContent>
-              <PromptInputActionAddAttachments />
-            </PromptInputActionMenuContent>
-          </PromptInputActionMenu>
+      <PromptInputToolbar className="w-full">
+        <PromptInputTools className="w-full">
           <PromptInputModelSelect
             onValueChange={(value) => {
               setModel(models[value]);
@@ -204,6 +200,13 @@ export const ChatInput = ({
               ))}
             </PromptInputModelSelectContent>
           </PromptInputModelSelect>
+
+          <PromptInputActionMenu>
+            <PromptInputActionMenuTrigger className="ml-auto mr-2" />
+            <PromptInputActionMenuContent>
+              <PromptInputActionAddAttachments />
+            </PromptInputActionMenuContent>
+          </PromptInputActionMenu>
         </PromptInputTools>
         <PromptInputSubmit disabled={!input && !status} status={status} />
       </PromptInputToolbar>

@@ -32,9 +32,8 @@ export default function Chat() {
     updatePrompt,
     deletePrompt,
   } = usePrompts();
-  const [selectedPromptId, setSelectedPromptId] = useState<
-    string | undefined
-  >();
+  const [selectedPromptId, setSelectedPromptId] = useState("");
+  const [isClient, setIsClient] = useState(false);
   const [usage, setUsage] = useState<LanguageModelUsage>();
   const [document, setDocument] = useState<Document>({
     title: "",
@@ -47,16 +46,38 @@ export default function Chat() {
   documentRef.current = document;
 
   useEffect(() => {
-    const selectedPromptExists = prompts.some((p) => p.id === selectedPromptId);
+    setIsClient(true);
+    const storedPromptId = localStorage.getItem("selectedPromptId");
+    if (storedPromptId) {
+      setSelectedPromptId(storedPromptId);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+
+    const selectedPromptExists =
+      selectedPromptId && prompts.some((p) => p.id === selectedPromptId);
 
     if ((!selectedPromptId || !selectedPromptExists) && prompts.length > 0) {
       const defaultPrompt = prompts.find((p) => p.isDefault);
-      setSelectedPromptId(defaultPrompt?.id ?? prompts[0].id);
+      const newSelectedId = defaultPrompt?.id ?? prompts[0].id;
+      setSelectedPromptId(newSelectedId);
+      localStorage.setItem("selectedPromptId", newSelectedId);
     }
-  }, [prompts, selectedPromptId]);
+  }, [prompts, selectedPromptId, isClient]);
+
+  useEffect(() => {
+    if (isClient && selectedPromptId) {
+      localStorage.setItem("selectedPromptId", selectedPromptId);
+    }
+  }, [selectedPromptId, isClient]);
 
   const selectedPrompt = useMemo(
-    () => prompts.find((p) => p.id === selectedPromptId),
+    () =>
+      selectedPromptId
+        ? prompts.find((p) => p.id === selectedPromptId)
+        : undefined,
     [prompts, selectedPromptId],
   );
 
@@ -98,7 +119,12 @@ export default function Chat() {
         <PromptsManager
           prompts={prompts}
           selectedPromptId={selectedPromptId}
-          onSelectPrompt={setSelectedPromptId}
+          onSelectPrompt={(promptId) => {
+            setSelectedPromptId(promptId || "");
+            if (isClient && promptId) {
+              localStorage.setItem("selectedPromptId", promptId);
+            }
+          }}
           onAddPrompt={addPrompt}
           onUpdatePrompt={updatePrompt}
           onDeletePrompt={deletePrompt}

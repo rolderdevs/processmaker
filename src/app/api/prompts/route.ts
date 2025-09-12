@@ -22,13 +22,18 @@ export async function POST(request: Request) {
     // Accept both 'name' and 'title' for backwards compatibility
     const promptTitle = title || name;
 
-    if (!promptTitle || !content) {
-      if (!copyFromId) {
-        return NextResponse.json(
-          { message: "Title and content are required" },
-          { status: 400 },
-        );
-      }
+    if (!promptTitle) {
+      return NextResponse.json(
+        { message: "Title is required" },
+        { status: 400 },
+      );
+    }
+
+    if (!content && !copyFromId) {
+      return NextResponse.json(
+        { message: "Content is required" },
+        { status: 400 },
+      );
     }
 
     let newPrompt: Prompt | null;

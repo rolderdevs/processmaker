@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2Icon } from "lucide-react";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +22,7 @@ interface PromptsDialogProps {
     title: string;
     content: string;
     copyFromId?: string;
-  }) => void;
+  }) => Promise<void>;
   promptToEdit?: Prompt;
   promptToCopy?: Prompt;
 }
@@ -35,6 +36,9 @@ export function PromptsDialog({
 }: PromptsDialogProps) {
   const [title, setTitle] = React.useState("");
   const [content, setContent] = React.useState("");
+  const [titleError, setTitleError] = React.useState("");
+  const [contentError, setContentError] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
 
   React.useEffect(() => {
     if (promptToEdit) {
@@ -47,15 +51,46 @@ export function PromptsDialog({
       setTitle("");
       setContent("");
     }
+    setTitleError("");
+    setContentError("");
+    setIsLoading(false);
   }, [promptToEdit, promptToCopy]);
 
-  const handleSave = () => {
-    if (!title.trim()) return;
-    onSave({
-      title,
-      content,
-      copyFromId: promptToCopy?.id,
-    });
+  const validateForm = () => {
+    let isValid = true;
+
+    if (!title.trim()) {
+      setTitleError("Название обязательно");
+      isValid = false;
+    } else {
+      setTitleError("");
+    }
+
+    if (!promptToCopy && !content.trim()) {
+      setContentError("Содержание обязательно");
+      isValid = false;
+    } else {
+      setContentError("");
+    }
+
+    return isValid;
+  };
+
+  const handleSave = async () => {
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    try {
+      await onSave({
+        title,
+        content,
+        copyFromId: promptToCopy?.id,
+      });
+    } catch (error) {
+      console.error("Error saving prompt:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getTitle = () => {
@@ -75,31 +110,50 @@ export function PromptsDialog({
             <Label htmlFor="title" className="text-right">
               Название
             </Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="col-span-3"
-            />
+            <div className="col-span-3">
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className={titleError ? "border-red-500" : ""}
+              />
+              {titleError && (
+                <p className="text-sm text-red-500 mt-1">{titleError}</p>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-4 items-start gap-4">
             <Label htmlFor="content" className="text-right pt-2">
               Содержание
             </Label>
-            <Textarea
-              id="content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="col-span-3 min-h-96"
-              placeholder="Введите содержание промпта здесь..."
-            />
+            <div className="col-span-3">
+              <Textarea
+                id="content"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className={`min-h-96 ${contentError ? "border-red-500" : ""}`}
+                placeholder="Введите содержание промпта здесь..."
+              />
+              {contentError && (
+                <p className="text-sm text-red-500 mt-1">{contentError}</p>
+              )}
+            </div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose} disabled={isLoading}>
             Отмена
           </Button>
-          <Button onClick={handleSave}>Сохранить</Button>
+          <Button onClick={handleSave} disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2Icon className="animate-spin mr-2 h-4 w-4" />
+                Сохранение...
+              </>
+            ) : (
+              "Сохранить"
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

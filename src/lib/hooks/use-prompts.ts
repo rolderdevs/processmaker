@@ -44,7 +44,7 @@ export function usePrompts() {
       values:
         | { title: string; content: string }
         | { title: string; copyFromId: string },
-    ) => {
+    ): Promise<string> => {
       try {
         const response = await fetch("/api/prompts", {
           method: "POST",
@@ -54,7 +54,9 @@ export function usePrompts() {
         if (!response.ok) {
           throw new Error(`Failed to add prompt: ${response.statusText}`);
         }
+        const newPrompt = await response.json();
         await fetchPrompts();
+        return newPrompt.id;
       } catch (error) {
         console.error(error);
         throw error; // Re-throw to be caught in the component

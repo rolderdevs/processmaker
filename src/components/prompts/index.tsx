@@ -2,6 +2,7 @@
 
 import {
   CopyIcon,
+  Loader2Icon,
   MoreVertical,
   PencilIcon,
   PlusIcon,
@@ -38,13 +39,13 @@ import { PromptsDialog } from "./prompts-dialog";
 
 interface PromptsManagerProps {
   prompts: Prompt[];
-  selectedPromptId: string | undefined;
+  selectedPromptId: string;
   onSelectPrompt: (promptId: string) => void;
   onAddPrompt: (
     values:
       | { title: string; content: string }
       | { title: string; copyFromId: string },
-  ) => Promise<void>;
+  ) => Promise<string>;
   onUpdatePrompt: (
     promptId: string,
     values: { title: string; content: string },
@@ -66,9 +67,13 @@ export function PromptsManager({
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [promptToEdit, setPromptToEdit] = React.useState<Prompt | undefined>();
   const [promptToCopy, setPromptToCopy] = React.useState<Prompt | undefined>();
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const selectedPrompt = React.useMemo(
-    () => prompts.find((p) => p.id === selectedPromptId),
+    () =>
+      selectedPromptId
+        ? prompts.find((p) => p.id === selectedPromptId)
+        : undefined,
     [prompts, selectedPromptId],
   );
 
@@ -94,8 +99,15 @@ export function PromptsManager({
 
   const confirmDelete = async () => {
     if (!selectedPrompt || selectedPrompt.isDefault) return;
-    await onDeletePrompt(selectedPrompt.id);
-    setDeleteDialogOpen(false);
+    setIsLoading(true);
+    try {
+      await onDeletePrompt(selectedPrompt.id);
+      setDeleteDialogOpen(false);
+    } catch (error) {
+      console.error("Error deleting prompt:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSave = async (values: {
@@ -103,23 +115,39 @@ export function PromptsManager({
     content: string;
     copyFromId?: string;
   }) => {
-    if (promptToEdit) {
-      await onUpdatePrompt(promptToEdit.id, {
-        title: values.title,
-        content: values.content,
-      });
-    } else if (values.copyFromId) {
-      await onAddPrompt({ title: values.title, copyFromId: values.copyFromId });
-    } else {
-      await onAddPrompt({ title: values.title, content: values.content });
-    }
+    setIsLoading(true);
+    try {
+      if (promptToEdit) {
+        await onUpdatePrompt(promptToEdit.id, {
+          title: values.title,
+          content: values.content,
+        });
+      } else if (values.copyFromId) {
+        const newPromptId = await onAddPrompt({
+          title: values.title,
+          copyFromId: values.copyFromId,
+        });
+        onSelectPrompt(newPromptId);
+      } else {
+        const newPromptId = await onAddPrompt({
+          title: values.title,
+          content: values.content,
+        });
+        onSelectPrompt(newPromptId);
+      }
 
-    setDialogOpen(false);
+      setDialogOpen(false);
+    } catch (error) {
+      console.error("Error saving prompt:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <Select onValueChange={onSelectPrompt} value={selectedPromptId}>
+      <Select onValueChange={onSelectPrompt} value={selectedPromptId || ""}>
         <SelectTrigger className="flex-1">
           <SelectValue placeholder="Выберите промпт..." />
         </SelectTrigger>
@@ -132,32 +160,52 @@ export function PromptsManager({
         </SelectContent>
       </Select>
 
-      <Button variant="outline" size="icon" onClick={handleCreateNew}>
-        <PlusIcon className="h-4 w-4" />
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={handleCreateNew}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <Loader2Icon className="h-4 w-4 animate-spin" />
+        ) : (
+          <PlusIcon className="h-4 w-4" />
+        )}
       </Button>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" disabled={!selectedPrompt}>
-            <MoreVertical className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled={!selectedPrompt || isLoading}
+          >
+            {isLoading ? (
+              <Loader2Icon className="h-4 w-4 animate-spin" />
+            ) : (
+              <MoreVertical className="h-4 w-4" />
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem
             onClick={handleEdit}
-            disabled={!selectedPrompt || selectedPrompt.isDefault}
+            disabled={!selectedPrompt || selectedPrompt.isDefault || isLoading}
           >
             <PencilIcon className="mr-2 h-4 w-4" />
             Редактировать
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleCopy} disabled={!selectedPrompt}>
+          <DropdownMenuItem
+            onClick={handleCopy}
+            disabled={!selectedPrompt || isLoading}
+          >
             <CopyIcon className="mr-2 h-4 w-4" />
             Дублировать
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => setDeleteDialogOpen(true)}
-            disabled={!selectedPrompt || selectedPrompt.isDefault}
+            disabled={!selectedPrompt || selectedPrompt.isDefault || isLoading}
             className="text-red-500 focus:text-red-500"
           >
             <Trash2Icon className="mr-2 h-4 w-4" />
@@ -185,12 +233,20 @@ export function PromptsManager({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogCancel disabled={isLoading}>Отмена</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
+              disabled={isLoading}
               className="bg-red-500 hover:bg-red-600"
             >
-              Удалить
+              {isLoading ? (
+                <>
+                  <Loader2Icon className="animate-spin mr-2 h-4 w-4" />
+                  Удаление...
+                </>
+              ) : (
+                "Удалить"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

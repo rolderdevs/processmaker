@@ -36,8 +36,8 @@ export function PromptsDialog({
 }: PromptsDialogProps) {
   const [title, setTitle] = React.useState("");
   const [content, setContent] = React.useState("");
-  const [titleError, setTitleError] = React.useState("");
-  const [contentError, setContentError] = React.useState("");
+  const [titleError, setTitleError] = React.useState(false);
+  const [contentError, setContentError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
 
   React.useEffect(() => {
@@ -51,8 +51,8 @@ export function PromptsDialog({
       setTitle("");
       setContent("");
     }
-    setTitleError("");
-    setContentError("");
+    setTitleError(false);
+    setContentError(false);
     setIsLoading(false);
   }, [promptToEdit, promptToCopy]);
 
@@ -60,17 +60,17 @@ export function PromptsDialog({
     let isValid = true;
 
     if (!title.trim()) {
-      setTitleError("Название обязательно");
+      setTitleError(true);
       isValid = false;
     } else {
-      setTitleError("");
+      setTitleError(false);
     }
 
     if (!promptToCopy && !content.trim()) {
-      setContentError("Содержание обязательно");
+      setContentError(true);
       isValid = false;
     } else {
-      setContentError("");
+      setContentError(false);
     }
 
     return isValid;
@@ -117,9 +117,6 @@ export function PromptsDialog({
                 onChange={(e) => setTitle(e.target.value)}
                 className={titleError ? "border-red-500" : ""}
               />
-              {titleError && (
-                <p className="text-sm text-red-500 mt-1">{titleError}</p>
-              )}
             </div>
           </div>
           <div className="grid grid-cols-4 items-start gap-4">
@@ -132,11 +129,7 @@ export function PromptsDialog({
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 className={`min-h-96 ${contentError ? "border-red-500" : ""}`}
-                placeholder="Введите содержание промпта здесь..."
               />
-              {contentError && (
-                <p className="text-sm text-red-500 mt-1">{contentError}</p>
-              )}
             </div>
           </div>
         </div>
@@ -147,7 +140,7 @@ export function PromptsDialog({
           <Button onClick={handleSave} disabled={isLoading}>
             {isLoading ? (
               <>
-                <Loader2Icon className="animate-spin mr-2 h-4 w-4" />
+                <Loader2Icon className="animate-spin" />
                 Сохранение...
               </>
             ) : (

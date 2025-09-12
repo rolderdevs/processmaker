@@ -147,7 +147,11 @@ export function PromptsManager({
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <Select onValueChange={onSelectPrompt} value={selectedPromptId || ""}>
+      <Select
+        disabled={isLoading}
+        onValueChange={onSelectPrompt}
+        value={selectedPromptId || ""}
+      >
         <SelectTrigger className="flex-1">
           <SelectValue placeholder="Выберите промпт..." />
         </SelectTrigger>
@@ -166,11 +170,7 @@ export function PromptsManager({
         onClick={handleCreateNew}
         disabled={isLoading}
       >
-        {isLoading ? (
-          <Loader2Icon className="h-4 w-4 animate-spin" />
-        ) : (
-          <PlusIcon className="h-4 w-4" />
-        )}
+        {isLoading ? <Loader2Icon className="animate-spin" /> : <PlusIcon />}
       </Button>
 
       <DropdownMenu>
@@ -180,11 +180,7 @@ export function PromptsManager({
             size="icon"
             disabled={!selectedPrompt || isLoading}
           >
-            {isLoading ? (
-              <Loader2Icon className="h-4 w-4 animate-spin" />
-            ) : (
-              <MoreVertical className="h-4 w-4" />
-            )}
+            <MoreVertical />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -192,14 +188,14 @@ export function PromptsManager({
             onClick={handleEdit}
             disabled={!selectedPrompt || selectedPrompt.isDefault || isLoading}
           >
-            <PencilIcon className="mr-2 h-4 w-4" />
+            <PencilIcon />
             Редактировать
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={handleCopy}
             disabled={!selectedPrompt || isLoading}
           >
-            <CopyIcon className="mr-2 h-4 w-4" />
+            <CopyIcon />
             Дублировать
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -208,7 +204,7 @@ export function PromptsManager({
             disabled={!selectedPrompt || selectedPrompt.isDefault || isLoading}
             className="text-red-500 focus:text-red-500"
           >
-            <Trash2Icon className="mr-2 h-4 w-4" />
+            <Trash2Icon />
             Удалить
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -241,7 +237,7 @@ export function PromptsManager({
             >
               {isLoading ? (
                 <>
-                  <Loader2Icon className="animate-spin mr-2 h-4 w-4" />
+                  <Loader2Icon className="animate-spin" />
                   Удаление...
                 </>
               ) : (

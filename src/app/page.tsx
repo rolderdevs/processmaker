@@ -15,8 +15,7 @@ import {
   ArtifactTitle,
 } from "@/components/ai-elements/artifact";
 import { Response } from "@/components/ai-elements/response";
-import { ChatInput } from "@/components/chat";
-import { ChatConversation } from "@/components/chat/conversation";
+import { ChatConversation, ChatInput } from "@/components/chat";
 import { DiffView } from "@/components/diffview";
 import { PromptsManager } from "@/components/prompts";
 import { type Model, models } from "@/lib/ai";

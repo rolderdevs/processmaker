@@ -1,0 +1,14 @@
+{
+  "context_servers": {
+    "Vercel": {
+      "source": "custom",
+      "command": "bunx",
+      "args": ["mcp-remote", "https://mcp.vercel.com/rolder/processmaker"]
+    },
+    "Next.js Documentation": {
+      "source": "custom",
+      "command": "bunx",
+      "args": ["@taiyokimura/nextjs-docs-mcp@latest"]
+    }
+  }
+}

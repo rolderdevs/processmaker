@@ -8,8 +8,6 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import * as React from "react";
-
-import type { Prompt } from "@/app/api/prompts/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { Prompt } from "@/lib/db";
 import { PromptsDialog } from "./prompts-dialog";
 
 interface PromptsManagerProps {

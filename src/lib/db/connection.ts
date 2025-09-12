@@ -1,4 +1,4 @@
-import Surreal, { RecordId, StringRecordId, Table } from "surrealdb";
+import Surreal from "surrealdb";
 
 let db: Surreal | null = null;
 
@@ -44,5 +44,4 @@ export async function getDB(): Promise<Surreal> {
   }
 }
 
-export { RecordId, StringRecordId, Table };
 export default getDB;

@@ -1,7 +1,8 @@
-import { getDB } from "./db";
+import { getDB } from "./connection";
+import { DEFAULT_PROMPT } from "./repositories/default-prompt";
 
-export async function initializeDatabase(): Promise<void> {
-  console.log("🔧 Starting database initialization...");
+export async function initializeSchema(): Promise<void> {
+  console.log("🔧 Starting database schema initialization...");
 
   try {
     const db = await getDB();
@@ -52,6 +53,19 @@ export async function initializeDatabase(): Promise<void> {
       ;
     `);
 
+    console.log("✅ Schema created successfully");
+  } catch (error) {
+    console.error("💥 Failed to initialize schema:", error);
+    throw error;
+  }
+}
+
+export async function seedDefaultData(): Promise<void> {
+  console.log("🌱 Starting default data seeding...");
+
+  try {
+    const db = await getDB();
+
     // Check if there are any prompts
     console.log("🔍 Checking for existing prompts...");
     const existingPrompts = await db.select("prompt");
@@ -61,9 +75,8 @@ export async function initializeDatabase(): Promise<void> {
     if (!existingPrompts || existingPrompts.length === 0) {
       console.log("➕ Creating default prompt...");
       await db.create("prompt", {
-        title: "Default Assistant",
-        content:
-          "You are a helpful AI assistant. Please provide clear, accurate, and helpful responses to user questions.",
+        title: "ProcessMaker",
+        content: DEFAULT_PROMPT,
         isDefault: true,
       });
 
@@ -72,6 +85,19 @@ export async function initializeDatabase(): Promise<void> {
       console.log("⏭️ Default prompt already exists, skipping");
     }
 
+    console.log("🌱 Default data seeding completed");
+  } catch (error) {
+    console.error("💥 Failed to seed default data:", error);
+    throw error;
+  }
+}
+
+export async function initializeDatabase(): Promise<void> {
+  console.log("🚀 Starting database initialization...");
+
+  try {
+    await initializeSchema();
+    await seedDefaultData();
     console.log("🎉 Database initialized successfully");
   } catch (error) {
     console.error("💥 Failed to initialize database:", error);

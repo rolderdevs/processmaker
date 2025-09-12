@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import type { Prompt } from "@/app/api/prompts/types";
+import type { Prompt } from "@/lib/db";
 
 interface UsePromptsState {
   prompts: Prompt[];

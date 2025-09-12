@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-
-import type { Prompt } from "@/app/api/prompts/types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import type { Prompt } from "@/lib/db";
 
 interface PromptsDialogProps {
   isOpen: boolean;

@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -67,14 +66,9 @@ export function PromptsDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>{getTitle()}</DialogTitle>
-          <DialogDescription>
-            {promptToEdit
-              ? "Отредактируйте существующий промпт."
-              : "Создайте новый промпт."}
-          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
@@ -96,7 +90,7 @@ export function PromptsDialog({
               id="content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="col-span-3 min-h-[300px]"
+              className="col-span-3 min-h-96"
               placeholder="Введите содержание промпта здесь..."
             />
           </div>

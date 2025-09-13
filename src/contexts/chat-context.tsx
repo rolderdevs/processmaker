@@ -8,6 +8,7 @@ import {
   type FileUIPart,
   type LanguageModelUsage,
 } from "ai";
+import { Loader2Icon } from "lucide-react";
 import {
   createContext,
   type ReactNode,
@@ -90,7 +91,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   // Показываем загрузку пока промпты не загрузились
   if (loading) {
-    return <div>Загрузка промптов...</div>;
+    return (
+      <div className="p-6 size-full h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
+          <div className="text-sm text-muted-foreground">Загрузка ...</div>
+        </div>
+      </div>
+    );
   }
 
   return <ChatProviderInner>{children}</ChatProviderInner>;

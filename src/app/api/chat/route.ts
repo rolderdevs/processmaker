@@ -33,8 +33,6 @@ export async function POST(request: Request) {
     agentInstructions: string;
   } = await request.json();
 
-  console.log("agentInstructions", agentInstructions);
-
   try {
     const openrouterModel = openrouter.chat(model);
 

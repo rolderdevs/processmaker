@@ -86,6 +86,17 @@ interface ChatContextValue {
 const ChatContext = createContext<ChatContextValue | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
+  const { loading } = usePrompts();
+
+  // Показываем загрузку пока промпты не загрузились
+  if (loading) {
+    return <div>Загрузка промптов...</div>;
+  }
+
+  return <ChatProviderInner>{children}</ChatProviderInner>;
+}
+
+function ChatProviderInner({ children }: { children: ReactNode }) {
   const [model, setModel] = useState<Model>(models["google/gemini-2.5-flash"]);
   const [usage, setUsage] = useState<LanguageModelUsage>();
 
@@ -100,7 +111,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         api: "/api/chat",
         body: () => ({
           model: model.value,
-          system: selectedPrompt?.content,
+          agentInstructions: selectedPrompt?.content || "",
         }),
       }),
       onData: (dataPart) => {

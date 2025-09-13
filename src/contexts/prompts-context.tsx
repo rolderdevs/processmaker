@@ -12,6 +12,7 @@ import { usePrompts as usePromptsHook } from "@/lib/hooks/use-prompts";
 
 interface PromptsContextValue {
   prompts: Prompt[];
+  loading: boolean;
   selectedPromptId: string;
   selectedPrompt: Prompt | undefined;
   selectPrompt: (promptId: string) => void;
@@ -32,7 +33,8 @@ const PromptsContext = createContext<PromptsContextValue | undefined>(
 );
 
 export function PromptsProvider({ children }: { children: ReactNode }) {
-  const { prompts, addPrompt, updatePrompt, deletePrompt } = usePromptsHook();
+  const { prompts, loading, addPrompt, updatePrompt, deletePrompt } =
+    usePromptsHook();
 
   const [selectedPromptId, setSelectedPromptId] = useState("");
   const [isClient, setIsClient] = useState(false);
@@ -76,6 +78,7 @@ export function PromptsProvider({ children }: { children: ReactNode }) {
 
   const value: PromptsContextValue = {
     prompts,
+    loading,
     selectedPromptId,
     selectedPrompt,
     selectPrompt,

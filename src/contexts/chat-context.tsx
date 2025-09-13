@@ -30,7 +30,8 @@ interface ChatContextValue {
       | ((messages: ChatUIMessage[]) => ChatUIMessage[]),
   ) => void;
   sendMessage: (
-    message?: ChatUIMessage,
+    // biome-ignore lint/suspicious/noExplicitAny: <too complex>
+    message?: any,
     options?: ChatRequestOptions,
   ) => Promise<void>;
   status: ChatStatus;
@@ -52,7 +53,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       <div className="p-6 size-full h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
-          <div className="text-sm text-muted-foreground">Загрузка ...</div>
+          <div className="text-sm text-muted-foreground">
+            Загрузка промптов...
+          </div>
         </div>
       </div>
     );

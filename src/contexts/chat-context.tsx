@@ -5,7 +5,6 @@ import {
   type ChatRequestOptions,
   type ChatStatus,
   DefaultChatTransport,
-  type FileUIPart,
   type LanguageModelUsage,
 } from "ai";
 import { Loader2Icon } from "lucide-react";
@@ -31,49 +30,7 @@ interface ChatContextValue {
       | ((messages: ChatUIMessage[]) => ChatUIMessage[]),
   ) => void;
   sendMessage: (
-    message?:
-      | (Omit<ChatUIMessage, "id" | "role"> & {
-          id?: string | undefined;
-          role?: "system" | "user" | "assistant" | undefined;
-        } & {
-          text?: never;
-          files?: never;
-          messageId?: string;
-        })
-      | {
-          text: string;
-          files?: FileList | FileUIPart[];
-          metadata?:
-            | {
-                usage: {
-                  inputTokens: number;
-                  outputTokens: number;
-                  totalTokens: number;
-                  reasoningTokens: number;
-                  cachedInputTokens: number;
-                };
-              }
-            | undefined;
-          parts?: never;
-          messageId?: string;
-        }
-      | {
-          files: FileList | FileUIPart[];
-          metadata?:
-            | {
-                usage: {
-                  inputTokens: number;
-                  outputTokens: number;
-                  totalTokens: number;
-                  reasoningTokens: number;
-                  cachedInputTokens: number;
-                };
-              }
-            | undefined;
-          parts?: never;
-          messageId?: string;
-        }
-      | undefined,
+    message?: ChatUIMessage,
     options?: ChatRequestOptions,
   ) => Promise<void>;
   status: ChatStatus;

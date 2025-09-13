@@ -5,9 +5,9 @@ import {
   type ChatRequestOptions,
   type ChatStatus,
   DefaultChatTransport,
-  type FileUIPart,
   type LanguageModelUsage,
 } from "ai";
+import { Loader2Icon } from "lucide-react";
 import {
   createContext,
   type ReactNode,
@@ -30,49 +30,7 @@ interface ChatContextValue {
       | ((messages: ChatUIMessage[]) => ChatUIMessage[]),
   ) => void;
   sendMessage: (
-    message?:
-      | (Omit<ChatUIMessage, "id" | "role"> & {
-          id?: string | undefined;
-          role?: "system" | "user" | "assistant" | undefined;
-        } & {
-          text?: never;
-          files?: never;
-          messageId?: string;
-        })
-      | {
-          text: string;
-          files?: FileList | FileUIPart[];
-          metadata?:
-            | {
-                usage: {
-                  inputTokens: number;
-                  outputTokens: number;
-                  totalTokens: number;
-                  reasoningTokens: number;
-                  cachedInputTokens: number;
-                };
-              }
-            | undefined;
-          parts?: never;
-          messageId?: string;
-        }
-      | {
-          files: FileList | FileUIPart[];
-          metadata?:
-            | {
-                usage: {
-                  inputTokens: number;
-                  outputTokens: number;
-                  totalTokens: number;
-                  reasoningTokens: number;
-                  cachedInputTokens: number;
-                };
-              }
-            | undefined;
-          parts?: never;
-          messageId?: string;
-        }
-      | undefined,
+    message?: ChatUIMessage,
     options?: ChatRequestOptions,
   ) => Promise<void>;
   status: ChatStatus;
@@ -86,6 +44,24 @@ interface ChatContextValue {
 const ChatContext = createContext<ChatContextValue | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
+  const { loading } = usePrompts();
+
+  // Показываем загрузку пока промпты не загрузились
+  if (loading) {
+    return (
+      <div className="p-6 size-full h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
+          <div className="text-sm text-muted-foreground">Загрузка ...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return <ChatProviderInner>{children}</ChatProviderInner>;
+}
+
+function ChatProviderInner({ children }: { children: ReactNode }) {
   const [model, setModel] = useState<Model>(models["google/gemini-2.5-flash"]);
   const [usage, setUsage] = useState<LanguageModelUsage>();
 
@@ -100,7 +76,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         api: "/api/chat",
         body: () => ({
           model: model.value,
-          system: selectedPrompt?.content,
+          agentInstructions: selectedPrompt?.content || "",
         }),
       }),
       onData: (dataPart) => {

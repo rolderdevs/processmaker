@@ -26,11 +26,11 @@ export async function POST(request: Request) {
   const {
     messages,
     model,
-    system,
+    agentInstructions,
   }: {
     messages: ChatUIMessage[];
     model: string;
-    system?: string;
+    agentInstructions: string;
   } = await request.json();
 
   try {
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
         const result = streamText({
           model: openrouterModel,
           temperature: 0,
-          system,
+          system: agentInstructions,
           messages: convertToModelMessages(messages),
           stopWhen: stepCountIs(5),
           experimental_transform: smoothStream({ chunking: "word" }),
